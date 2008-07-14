@@ -1,0 +1,2 @@
+recursive-include amat/public *
+recursive-include amat/templates *
