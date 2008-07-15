@@ -1,5 +1,15 @@
-This file is for you to describe the amat application. Typically
-you would include information such as the information below:
+AMAT: Automated Monitoring And Tunnels
+
+Preliminaries
+=============
+
+How we got to here...
+
+As root:
+* apt-get update
+* apt-get install python-pylons
+* apt-get install python-sqlalchemy
+* paster create -t pylons amat
 
 Installation and Setup
 ======================
