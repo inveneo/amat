@@ -11,8 +11,12 @@ class amat_client (object):
 """
 https://<reg server>/reg?mac=<mac>&type=<host type>&host=<hostname>&cust=<customer>&desc=<short description>&geo=<geocode>&opperiod=<opperiod> 
 """
-	def __init__(self,parent):
+	def __init__(self,parent,mac,type,host,cust,desc,geo,opperiod):
 
+"""
+Use some default values for now, we'll fill them in later properly from the instance
+side once we get this thing working
+"""
 		mac="00145135cb20" 
 		type="client"
 		fullcust="somerandomcustname"
@@ -52,15 +56,17 @@ https://<reg server>/reg?mac=<mac>&type=<host type>&host=<hostname>&cust=<custom
 		print "geo "+geo
 		print "Full URL="+fullurl
 
-#
-#req = Request('http://twitter.com/users/show/jetdillo.json')
-#
-#
-#try:
-#	r=urlopen(req)
-#except URLError,e:
-#	print str(e)
-#	sys.exit(1)
-#
-#results = r.read()
-#print results
+	def connect(self,url):
+	
+		try:
+			r=urlopen(url)
+		except URLError, e:
+			print ("caught exception "+e+" trying to open "+url)
+			sys.exit(1)	
+
+		results = r.read()
+		print results 
+
+
+
+
