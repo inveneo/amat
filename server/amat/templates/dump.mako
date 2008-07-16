@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>hosts</title>
+<title>dump</title>
 </head>
 <body>
 <h3>hosts</h3>
@@ -22,6 +22,23 @@
 <td>${host.get_desc()}</td>
 <td>${host.get_geo()}</td>
 <td>${host.get_opperiod()}</td>
+</tr>
+% endfor
+</table>
+
+<h3>checkins</h3>
+<table cellpadding="5" border="1">
+<tr>
+<th>id</th>
+<th>tstamp</th>
+<th>mac</th>
+<th>status</th>
+</tr>
+% for checkin in c.checkins:
+<td>${checkin.get_id()}</td>
+<td>${checkin.get_tstamp()}</td>
+<td>${checkin.get_mac()}</td>
+<td>${checkin.get_status()}</td>
 </tr>
 % endfor
 </table>
