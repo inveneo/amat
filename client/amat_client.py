@@ -1,50 +1,60 @@
-#!/usr/bin/env python
+import sys
+import os
+import socket
+import re
+import urllib
+import string
+from urllib2 import urlopen,URLError,Request
 
-import sys, os, getopt, array, urllib2, socket, re
+class amc (object):
 
-EXITCHARCTER = '\x04'   #ctrl+D
+	baseurl=''	
 
-CONVERT_CRLF = 2
-CONVERT_CR   = 1
-CONVERT_LF   = 0
+	def __init__(self,parent):
 
-"""
-Simple implementer of the tunneler_client class
-to connect to the AMAT server, GET a URL with the appropriate data stuffed into it, etc.
-"""
+		self.baseurl="http://bb.inveneo.net:5000/reg?"
+
+	def gethostname(self):
+		if os.path.exists("/etc/hostname"):
+			host=os.popen('cat /etc/hostname').read()
+			host=host.strip()		
+		else:
+			hn=os.popen('which hostname').read()
+			if hn.length(hn) > 0:
+				host=hn[0:49]
+			else:
+				host="inveneo"+type
+		return host
+
+	def build_url(self,mac,type,host,cust,desc,geo,opperiod):
+		trim_desc=desc[0:299]
+#		enc_desc=self.encode_text(trim_desc) 
+		geo = geo.replace(',','%2C')		
+		opperiod = opperiod.replace(',','%2C')
+		opperiod = opperiod.replace(':','%3A')
+		fullurl=self.baseurl+"mac="+mac+"&type="+type+"&host="+host+"&cust="+cust+"&desc="+desc+"&geo="+geo+"&opperiod="+opperiod
+		return fullurl
+
+	def dumpparms(self):
+
+		print "Initial parameters are:"
+		print "mac "+mac
+		print "hosttype "+type
+		print "hostname "+host
+		print "cust "+cust
+		print "desc "+desc
+		print "geo "+geo
+		print "Full URL="+fullurl
+
+	def connect(self,url):
 	
-if __name__ == '__main__':
-    #initialize with defaults
+		try:
+#			req=Request(url)
+			req=urlopen(url)
 
-    #parse command line options
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],
-            "hf:o:",
-            ["help", "file=", "out="]
-        )
-    except getopt.GetoptError:
-        # print help information and exit:
-        usage()
-        sys.exit(2)
-    
-    for o, a in opts:
-	print "o=" + o + " a=" + a
-        if o in ("-h", "--help"):       #help text
-            usage()
-            sys.exit()
-        elif o in ("-f", "--file"):     
-            try:
-                framefile = int(a)
-            except ValueError:
-		framefile = a
-        elif o in ("-o", "--out"):
-            try:
-                outfile = int(a)
-            except ValueError:
-                outfile = a
-    
-    print("About to connect to amat server")
-"""
-do implementation stuff here
-"""
-    sys.stderr.write("\n--- exit ---\n")
+		except URLError, e:
+			print "caught exception ",e," trying to open "+url
+			sys.exit(1)	
+
+		results = req.read()
+		print results 
