@@ -11,6 +11,14 @@ As root:
 * apt-get install python-sqlalchemy
 * paster create -t pylons amat
 
+How to run the server...
+* paster serve --reload development.ini
+
+Controllers:
+* reg
+* checkin
+* dump
+
 Installation and Setup
 ======================
 
