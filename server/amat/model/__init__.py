@@ -85,7 +85,8 @@ class Checkin(object):
     def __init__(self, mac, status):
         # id will be set by database
         self.tstamp = time()
-        self.set_mac(mac)
+        assert(type(mac) == int)
+        self.mac = mac
         self.set_status(status)
 
     # accessors - all return strings
