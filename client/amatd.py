@@ -26,17 +26,28 @@ if __name__ == '__main__':
  	aclnt = amat_client.amc(None)
 
 	mac="00145135cb20"
-	type="client"
+	status="ok"
+	type="station"
 	host=aclnt.gethostname()
 	cust="somerandomcustname"
 	desc="some free random descriptive text"
 	geo="-37.784825,-122.419968"
 	desc=desc.replace(' ', '%20')
 	opperiod="12345:0900-1700,06:1200-1800"
-	myurl=aclnt.build_url(mac,type,host,cust,desc,geo,opperiod)
+
+	myurl=aclnt.build_reg_url(mac,type,host,cust,desc,geo,opperiod)
     
-	print("About to connect to amat server")
+	print("About to connect to register with AMAT server")
 	print("Using URL "+myurl)
 	aclnt.connect(myurl)
+
+	print("Doing checkin with AMAT server") 
+
+	myurl=aclnt.build_checkin_url(mac,status)
+	print "checkin URL is ", myurl
+	if myurl != -1 or myurl !=None :
+		aclnt.connect(myurl)	
+	else:
+		print "build_checkin_url failed!"	
 
 	sys.stderr.write("\n--- exit ---\n")
