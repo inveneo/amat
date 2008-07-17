@@ -23,17 +23,23 @@ to connect to the AMAT server, GET a URL with the appropriate data stuffed into 
 if __name__ == '__main__':
     #initialize with defaults
 
+	server_cmd={}
+	response=''	
+	resp_lines=[]
  	aclnt = amat_client.amc(None)
 
-	mac="00145135cb20"
-	status="ok"
-	type="station"
-	host=aclnt.gethostname()
-	cust="somerandomcustname"
-	desc="some free random descriptive text"
-	geo="-37.784825,-122.419968"
-	desc=desc.replace(' ', '%20')
-	opperiod="12345:0900-1700,06:1200-1800"
+	if os.path.exists("./amatd.conf"):
+		aclnt.load_config("./amatd.conf")
+	else:
+		mac="00145135cb20"
+		status="ok"
+		type="station"
+		host=aclnt.gethostname()
+		cust="somerandomcustname"
+		desc="some free random descriptive text"
+		geo="-37.784825,-122.419968"
+		desc=desc.replace(' ', '%20')
+		opperiod="12345:0900-1700,06:1200-1800"
 
 	myurl=aclnt.build_reg_url(mac,type,host,cust,desc,geo,opperiod)
     
@@ -46,7 +52,14 @@ if __name__ == '__main__':
 	myurl=aclnt.build_checkin_url(mac,status)
 	print "checkin URL is ", myurl
 	if myurl != -1 or myurl !=None :
-		aclnt.connect(myurl)	
+		cmdpairs=[]
+		response=aclnt.connect(myurl)	
+		resp_lines=response.splitlines()
+		print "resp_lines=",resp_lines
+		numlines = len(resp_lines)
+		for i in 0,numlines:
+			cmdpairs=resp_lines[i].split('=')
+			server_cmd[cmdpairs[0]]=cmdpairs[1]
 	else:
 		print "build_checkin_url failed!"	
 
