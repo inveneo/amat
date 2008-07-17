@@ -39,7 +39,7 @@ class amc (object):
 		results=0	
 		print "mac="+mac+" status="+status
 		print "mac length=%d status length=%d",len(mac),len(status)
-		mac = mac[0:11]
+		mac = mac[0:12]
 		checkin_url=self.baseurl+"checkin?"+"mac="+mac+"&status="+status
 		return checkin_url
 
@@ -63,12 +63,33 @@ class amc (object):
 
 		except URLError, e:
 			print "caught exception ",e," trying to open "+url
+			print "Error code is",e.code
+			print "Header info",e.info()
+			print "URL retrieved was:\n"+e.geturl()
 			sys.exit(1)	
 
 		results = resp.read()
+		hdr = resp.info()
 		print results 
-
+		print hdr
+		return results
 
 	def parse_results(self,resp_data):
-
 		print "IM IN YR RESPONSE ]<0d3, SHR3DD1n yr DATA!!"
+
+	def load_config(self,conf_file):
+		config_data= []		
+		pairs= []
+		parse_count=0
+		f = open(conf_file,'r')
+		for line in f.readlines():
+			if line.find('=')>= 0:
+				pairs=line.split('=')
+				print "pairs="+pairs[0]+","+pairs[1]
+				config_data[parse_count]=pairs[1]
+				print "config line="+config_data[parse_count]
+				parse_count +=1
+			else:
+				print "Parse error in config file!\noffending line was "+line
+				return -1
+				
