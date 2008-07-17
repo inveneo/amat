@@ -39,26 +39,29 @@ class Host(object):
     def get_opperiod(self): return self.opperiod
 
     # mutators - all take strings
-    # XXX do better verification here
     def set_type(self, tipe):
-        # assert(type(tipe) == unicode)
+        assert(type(tipe) == unicode)
         tipe = tipe[0:SIZE_TYPE].lower()
         assert(tipe in ['hub', 'station'])
         self.type = tipe
+
     def set_host(self, host):
-        # assert(type(host) == unicode)
+        assert(type(host) == unicode)
         host = host[0:SIZE_HOST]
         self.host = host
+
     def set_cust(self, cust):
-        # assert(type(cust) == unicode)
+        assert(type(cust) == unicode)
         cust = cust[0:SIZE_CUST]
         self.cust = cust
+
     def set_desc(self, desc):
-        # assert(type(desc) == unicode)
+        assert(type(desc) == unicode)
         desc = desc[0:SIZE_DESC]
         self.desc = desc
+
     def set_geo(self, geo):
-        # assert(type(geo) == unicode)
+        assert(type(geo) == unicode)
         if len(geo):
             parts = geo.split(',')
             self.lat = float(parts[0])
@@ -66,18 +69,19 @@ class Host(object):
         else:
             self.lat = 0.0
             self.lon = 0.0
+
     def set_opperiod(self, opperiod):
-        # assert(type(opperiod) == unicode)
+        assert(type(opperiod) == unicode)
         opperiod = opperiod[0:SIZE_OPPERIOD]
         self.opperiod = opperiod
 
     def __str__(self):
-        return ('mac=%s\n'      % self.get_mac()) + \
+        return ('mac=%s\n'      % self.get_mac())  + \
                ('type=%s\n'     % self.get_type()) + \
                ('host=%s\n'     % self.get_host()) + \
                ('cust=%s\n'     % self.get_cust()) + \
                ('desc=%s\n'     % self.get_desc()) + \
-               ('geo=%s\n'      % self.get_geo()) + \
+               ('geo=%s\n'      % self.get_geo())  + \
                ('opperiod=%s\n' % self.get_opperiod())
 
 class Checkin(object):
@@ -90,41 +94,41 @@ class Checkin(object):
         self.set_status(status)
 
     # accessors - all return strings
-    def get_id(self):     return '%x' % self.id
+    def get_id(self):     return '%d' % self.id
     def get_tstamp(self): return '%f' % self.tstamp
     def get_mac(self):    return '%x' % self.mac
     def get_status(self): return '%s' % self.status
 
     # mutators - all take strings
-    # XXX do better verification here
     def set_mac(self, mac):
         assert(type(mac) == int)
         self.mac = int(mac, 16)
+
     def set_status(self, status):
-        # assert(type(status) == unicode)
-        status = status.lower()
+        assert(type(status) == unicode)
+        status = status[0:SIZE_STATUS].lower()
         assert(status in ['ok', 'shutdown'])
         self.status = status
 
     def __str__(self):
-        return ('id=%s\n' % self.get_id()) + \
+        return ('id=%s\n'     % self.get_id())     + \
                ('tstamp=%s\n' % self.get_tstamp()) + \
-               ('mac=%s\n' % self.get_mac()) + \
+               ('mac=%s\n'    % self.get_mac())    + \
                ('status=%s\n' % self.get_status())
 
 host_table = Table('host', metadata,
-        Column('mac',  types.Integer, primary_key=True),  # MAC address
-        Column('type', types.Unicode(SIZE_TYPE)),         # hub or station
-        Column('host', types.Unicode(SIZE_HOST)),         # hostname
-        Column('cust', types.Unicode(SIZE_CUST)),
-        Column('desc', types.Unicode(SIZE_DESC)),
-        Column('lat',  types.Float),                      # from geo
-        Column('lon',  types.Float),                      # from geo
+        Column('mac',      types.Integer, primary_key=True),  # MAC address
+        Column('type',     types.Unicode(SIZE_TYPE)),         # hub or station
+        Column('host',     types.Unicode(SIZE_HOST)),         # hostname
+        Column('cust',     types.Unicode(SIZE_CUST)),
+        Column('desc',     types.Unicode(SIZE_DESC)),
+        Column('lat',      types.Float),                      # from geo
+        Column('lon',      types.Float),                      # from geo
         Column('opperiod', types.Unicode(SIZE_OPPERIOD)))
 
 checkin_table = Table('checkin', metadata,
-        Column('id', types.Integer, primary_key=True),  # auto generated
-        Column('mac', types.Integer, ForeignKey('host.mac')),
+        Column('id',     types.Integer, primary_key=True),  # auto generated
+        Column('mac',    types.Integer, ForeignKey('host.mac')),
         Column('status', types.Unicode(SIZE_STATUS)),
         Column('tstamp', types.Float))
 

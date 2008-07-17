@@ -24,4 +24,14 @@ class CheckinController(BaseController):
         Session.save_or_update(c.checkin)
         Session.commit()
 
-        return render('/checkin.mako')
+        # see if there is a command for this client
+        command = 'establish_tunnel'
+        remote_port = 22
+        local_port = 7004
+        username = 'aX^^#ds'
+        password = 'gb&*23zxncD'
+        return 'command=%s\n'     % command + \
+               'remote_port=%d\n' % remote_port + \
+               'local_port=%d\n'  % local_port + \
+               'username=%s\n'    % username + \
+               'password=%s\n'    % password
