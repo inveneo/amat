@@ -20,14 +20,15 @@ class Host(object):
 
     def __init__(self, mac):
         """Create new, empty object"""
-        assert(type(mac) == int)
+        assert type(mac) == int, 'mac is not int'
         self.mac = mac
-        self.set_type('')
-        self.set_host('')
-        self.set_cust('')
-        self.set_desc('')
-        self.set_geo('0,0')
-        self.set_opperiod('')
+        self.type = u'undefined'
+        self.host = u'undefined'
+        self.cust = u'undefined'
+        self.desc = u'undefined'
+        self.lat = 0.0
+        self.lon = 0.0
+        self.opperiod = u'undefined'
 
     # accessors - all return strings
     def get_mac(self):  return '%x' % self.mac
@@ -40,28 +41,28 @@ class Host(object):
 
     # mutators - all take strings
     def set_type(self, tipe):
-        assert(type(tipe) == unicode)
+        assert type(tipe) == unicode, 'type: not unicode'
         tipe = tipe[0:SIZE_TYPE].lower()
-        assert(tipe in ['hub', 'station'])
+        assert tipe in ['hub', 'station'], 'type: bad value'
         self.type = tipe
 
     def set_host(self, host):
-        assert(type(host) == unicode)
+        assert type(host) == unicode, 'host: not unicode'
         host = host[0:SIZE_HOST]
         self.host = host
 
     def set_cust(self, cust):
-        assert(type(cust) == unicode)
+        assert type(cust) == unicode, 'cust: not unicode'
         cust = cust[0:SIZE_CUST]
         self.cust = cust
 
     def set_desc(self, desc):
-        assert(type(desc) == unicode)
+        assert type(desc) == unicode, 'desc: not unicode'
         desc = desc[0:SIZE_DESC]
         self.desc = desc
 
     def set_geo(self, geo):
-        assert(type(geo) == unicode)
+        assert type(geo) == unicode, 'geo: not unicode'
         if len(geo):
             parts = geo.split(',')
             self.lat = float(parts[0])
@@ -71,7 +72,7 @@ class Host(object):
             self.lon = 0.0
 
     def set_opperiod(self, opperiod):
-        assert(type(opperiod) == unicode)
+        assert type(opperiod) == unicode, 'opperiod: not unicode'
         opperiod = opperiod[0:SIZE_OPPERIOD]
         self.opperiod = opperiod
 
@@ -89,7 +90,7 @@ class Checkin(object):
     def __init__(self, mac, status):
         # id will be set by database
         self.tstamp = time()
-        assert(type(mac) == int)
+        assert type(mac) == int, 'mac: not int'
         self.mac = mac
         self.set_status(status)
 
@@ -101,13 +102,13 @@ class Checkin(object):
 
     # mutators - all take strings
     def set_mac(self, mac):
-        assert(type(mac) == int)
-        self.mac = int(mac, 16)
+        assert type(mac) == int, 'mac: not int'
+        self.mac = mac
 
     def set_status(self, status):
-        assert(type(status) == unicode)
+        assert type(status) == unicode, 'status: not unicode'
         status = status[0:SIZE_STATUS].lower()
-        assert(status in ['ok', 'shutdown'])
+        assert status in ['ok', 'shutdown'], 'status: bad value'
         self.status = status
 
     def __str__(self):

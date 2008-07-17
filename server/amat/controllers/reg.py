@@ -10,7 +10,8 @@ class RegController(BaseController):
     def index(self):
         d = request.GET
         try:
-            mac = int(d.get('mac'), 16)
+            mac = int(d['mac'], 16)
+            assert mac == mac & 0xFFFFFFFFFFFF, 'mac: bad value'
         except:
             abort(400, 'Missing or invalid mac')
 
@@ -20,32 +21,32 @@ class RegController(BaseController):
         if not c.host:
             try:
                 c.host = Host(mac)
-            except:
-                abort(400, 'Invalid mac')
+            except Exception, e:
+                abort(400, str(e))
 
         # update host attributes
         try:
-            c.host.set_type(d.get('type', ''))
+            c.host.set_type(d['type'])
         except:
-            abort(400, 'Invalid type')
+            abort(400, 'Missing or invalid type')
         try:
-            c.host.set_host(d.get('host', ''))
+            c.host.set_host(d.get('host', u''))
         except:
             abort(400, 'Invalid host')
         try:
-            c.host.set_cust(d.get('cust', ''))
+            c.host.set_cust(d.get('cust', u''))
         except:
             abort(400, 'Invalid cust')
         try:
-            c.host.set_desc(d.get('desc', ''))
+            c.host.set_desc(d.get('desc', u''))
         except:
             abort(400, 'Invalid desc')
         try:
-            c.host.set_geo(d.get('geo', '0,0'))
+            c.host.set_geo(d.get('geo', u''))
         except:
             abort(400, 'Invalid geo')
         try:
-            c.host.set_opperiod(d.get('opperiod', ''))
+            c.host.set_opperiod(d.get('opperiod', u''))
         except:
             abort(400, 'Invalid opperiod')
 
@@ -53,4 +54,6 @@ class RegController(BaseController):
         Session.save_or_update(c.host)
         Session.commit()
 
-        return render('/reg.mako')
+        if d.has_key('debug'):
+            return render('/reg.mako')
+        return ''
