@@ -53,13 +53,9 @@ if __name__ == '__main__':
 	print "checkin URL is ", myurl
 	if myurl != -1 or myurl !=None :
 		cmdpairs=[]
+		i=0
 		response=aclnt.connect(myurl)	
-		resp_lines=response.splitlines()
-		print "resp_lines=",resp_lines
-		numlines = len(resp_lines)
-		for i in 0,numlines:
-			cmdpairs=resp_lines[i].split('=')
-			server_cmd[cmdpairs[0]]=cmdpairs[1]
+		aclnt.proc_server_response(response)
 	else:
 		print "build_checkin_url failed!"	
 
