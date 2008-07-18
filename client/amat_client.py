@@ -43,17 +43,6 @@ class amc (object):
 		checkin_url=self.baseurl+"checkin?"+"mac="+mac+"&status="+status
 		return checkin_url
 
-	def dumpparms(self):
-
-		print "Initial parameters are:"
-		print "mac "+mac
-		print "hosttype "+type
-		print "hostname "+host
-		print "cust "+cust
-		print "desc "+desc
-		print "geo "+geo
-		print "Full URL="+fullurl
-
 	def connect(self,url):
 		req=''
 		resp=''	
@@ -82,13 +71,13 @@ class amc (object):
                 numlines = len(resp_lines)
                 for s in resp_lines:
                         cmdpairs=s.split('=')
-                        server_cmd[cmdpairs[0]]=cmdpairs[1]
+                        server_cmd[cmdpairs[0]]=self.str_sanitize(cmdpairs[1])
                 print "server_cmd",server_cmd['command']
 		cmd = server_cmd['command']
 		cur_user=server_cmd['username']
 		cur_pass=server_cmd['password']
-		r_port = server_cmd['remote_port']
-		l_port = server_cmd['local_port']
+		r_port = server_cmd['server_port']
+		l_port = server_cmd['client_port']
 
 		if cmd == "establish_tunnel" :
                 	self.tunnel_ctl(1,cur_user,cur_pass,l_port,r_port)
@@ -100,8 +89,9 @@ class amc (object):
 		tunnel_cmd = "sshpass -p "+pswd+" ssh -f -o StrictHostKeyChecking=no \
 -o ServerAliveInterval=10 \
 -o ServerAliveCountMax=3 \
--R "+(str(local_port))+":localhost:"+(str(rem_port))+"user@server"
-		print "tunnel startup command="+tunnel_cmd
+-R "+(str(local_port))+":localhost:"+(str(rem_port))+" "+user+"@bb.inveneo.net"
+		print "running "+tunnel_cmd
+		os.popen(tunnel_cmd)
 
 	def load_config(self,conf_file):
 		config_data= []		
@@ -119,3 +109,15 @@ class amc (object):
 			else:
 				print "Parse error in config file!\noffending line was "+line
 				return -1
+
+#This is really lame, but it will have to do 
+#until I have time to figure out the python re. 
+#and do it properly
+
+	def str_sanitize(self, instring):
+#		mc=["$","*","%","!","<",">","(",")"]
+#		for chr in mc:
+#			prot_char="\"+chr
+#			instring=instring.replace(chr,prot_char)
+		instring = instring.replace(".","\.")
+		return instring	
