@@ -74,8 +74,34 @@ class amc (object):
 		print hdr
 		return results
 
-	def parse_results(self,resp_data):
+	def proc_server_response(self,srv_resp):
+		server_cmd={}
 		print "IM IN YR RESPONSE ]<0d3, SHR3DD1n yr DATA!!"
+		resp_lines=srv_resp.splitlines()
+                print "resp_lines=",resp_lines
+                numlines = len(resp_lines)
+                for s in resp_lines:
+                        cmdpairs=s.split('=')
+                        server_cmd[cmdpairs[0]]=cmdpairs[1]
+                print "server_cmd",server_cmd['command']
+		cmd = server_cmd['command']
+		cur_user=server_cmd['username']
+		cur_pass=server_cmd['password']
+		r_port = server_cmd['remote_port']
+		l_port = server_cmd['local_port']
+
+		if cmd == "establish_tunnel" :
+                	self.tunnel_ctl(1,cur_user,cur_pass,l_port,r_port)
+		if cmd == "disable_tunnel" :
+			self.tunnel_ctl(0,cur_user,cur_pass,l_port,r_port)
+
+	def tunnel_ctl(self,state,user,pswd,local_port,rem_port):
+		
+		tunnel_cmd = "sshpass -p "+pswd+" ssh -f -o StrictHostKeyChecking=no \
+-o ServerAliveInterval=10 \
+-o ServerAliveCountMax=3 \
+-R "+(str(local_port))+":localhost:"+(str(rem_port))+"user@server"
+		print "tunnel startup command="+tunnel_cmd
 
 	def load_config(self,conf_file):
 		config_data= []		
@@ -89,7 +115,7 @@ class amc (object):
 				config_data[parse_count]=pairs[1]
 				print "config line="+config_data[parse_count]
 				parse_count +=1
+								
 			else:
 				print "Parse error in config file!\noffending line was "+line
 				return -1
-				
