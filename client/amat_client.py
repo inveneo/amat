@@ -86,7 +86,7 @@ class amc (object):
 
 	def tunnel_ctl(self,state,user,pswd,local_port,rem_port):
 		
-		tunnel_cmd = "sshpass -p "+pswd+" ssh -f -o StrictHostKeyChecking=no \
+		tunnel_cmd = "sshpass -p "+pswd+" ssh -C -g -o StrictHostKeyChecking=no \
 -o ServerAliveInterval=10 \
 -o ServerAliveCountMax=3 \
 -R "+(str(local_port))+":localhost:"+(str(rem_port))+" "+user+"@bb.inveneo.net"
