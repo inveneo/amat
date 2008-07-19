@@ -31,7 +31,7 @@ if __name__ == '__main__':
 	if os.path.exists("./amatd.conf"):
 		aclnt.load_config("./amatd.conf")
 	else:
-		mac="00145135cb20"
+		mac="003018625050"
 		status="ok"
 		type="station"
 		host=aclnt.gethostname()
