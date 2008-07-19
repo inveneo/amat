@@ -2,6 +2,7 @@ from pylons import config
 from sqlalchemy import Column, MetaData, Table, types, ForeignKey
 from sqlalchemy.orm import mapper, scoped_session, sessionmaker
 from time import time
+import random, string
 
 SIZE_TYPE = 10
 SIZE_HOST = 50
@@ -10,6 +11,8 @@ SIZE_DESC = 300
 SIZE_PER = 18
 SIZE_OPPERIOD = 10 * SIZE_PER
 SIZE_STATUS = 8
+SIZE_USER = 13
+SIZE_PASS = 32
 
 Session = scoped_session(sessionmaker(autoflush=True, transactional=True,
     bind=config['pylons.g'].sa_engine))
@@ -29,15 +32,21 @@ class Host(object):
         self.lat = 0.0
         self.lon = 0.0
         self.opperiod = u'undefined'
+        self.username = u'undefined'
+        self.password = u'undefined'
+        self.port = 22
 
     # accessors - all return strings
-    def get_mac(self):  return '%x' % self.mac
+    def get_mac(self):  return '%012x' % self.mac
     def get_type(self): return self.type
     def get_host(self): return self.host
     def get_cust(self): return self.cust
     def get_desc(self): return self.desc
     def get_geo(self):  return '%f,%f' % (self.lat, self.lon)
     def get_opperiod(self): return self.opperiod
+    def get_username(self): return self.username
+    def get_password(self): return self.password
+    def get_port(self): return '%d' % self.port
 
     # mutators - all take strings
     def set_type(self, tipe):
@@ -48,8 +57,7 @@ class Host(object):
 
     def set_host(self, host):
         assert type(host) == unicode, 'host: not unicode'
-        host = host[0:SIZE_HOST]
-        self.host = host
+        self.host = host[0:SIZE_HOST]
 
     def set_cust(self, cust):
         assert type(cust) == unicode, 'cust: not unicode'
@@ -58,8 +66,7 @@ class Host(object):
 
     def set_desc(self, desc):
         assert type(desc) == unicode, 'desc: not unicode'
-        desc = desc[0:SIZE_DESC]
-        self.desc = desc
+        self.desc = desc[0:SIZE_DESC]
 
     def set_geo(self, geo):
         assert type(geo) == unicode, 'geo: not unicode'
@@ -73,8 +80,27 @@ class Host(object):
 
     def set_opperiod(self, opperiod):
         assert type(opperiod) == unicode, 'opperiod: not unicode'
-        opperiod = opperiod[0:SIZE_OPPERIOD]
-        self.opperiod = opperiod
+        self.opperiod = opperiod[0:SIZE_OPPERIOD]
+
+    def set_username(self, username):
+        assert type(username) == unicode, 'username: not unicode'
+        self.username = username[0:SIZE_USER]
+
+    def set_password(self):
+        """No argument: always assigns random value."""
+        # create string of 64 (2 ** 6) unique symbols to choose from
+        passchars = string.letters + string.digits + ".-"
+        self.password = u''
+        fp = open('/dev/urandom', 'rb')
+        # entropy is (nearly) 6 bits per symbol times SIZE_PASS symbols
+        for i in range(SIZE_PASS):
+            byte = ord(fp.read(1)) # get eight bits of nice randomness
+            self.password += passchars[byte >> 2] # just use six of them
+        fp.close()
+
+    def set_port(self, port):
+        assert type(port) == int, 'port: not int'
+        self.port = port
 
     def __str__(self):
         return ('mac=%s\n'      % self.get_mac())  + \
@@ -83,7 +109,11 @@ class Host(object):
                ('cust=%s\n'     % self.get_cust()) + \
                ('desc=%s\n'     % self.get_desc()) + \
                ('geo=%s\n'      % self.get_geo())  + \
-               ('opperiod=%s\n' % self.get_opperiod())
+               ('opperiod=%s\n' % self.get_opperiod()) + \
+               ('username=%s\n' % self.get_username()) + \
+               ('password=%s\n' % self.get_password()) + \
+               ('port=%s\n'     % self.get_port())
+
 
 class Checkin(object):
 
@@ -97,7 +127,7 @@ class Checkin(object):
     # accessors - all return strings
     def get_id(self):     return '%d' % self.id
     def get_tstamp(self): return '%f' % self.tstamp
-    def get_mac(self):    return '%x' % self.mac
+    def get_mac(self):    return '%012x' % self.mac
     def get_status(self): return '%s' % self.status
 
     # mutators - all take strings
@@ -125,7 +155,10 @@ host_table = Table('host', metadata,
         Column('desc',     types.Unicode(SIZE_DESC)),
         Column('lat',      types.Float),                      # from geo
         Column('lon',      types.Float),                      # from geo
-        Column('opperiod', types.Unicode(SIZE_OPPERIOD)))
+        Column('opperiod', types.Unicode(SIZE_OPPERIOD)),
+        Column('username', types.Unicode(SIZE_USER)),
+        Column('password', types.Unicode(SIZE_PASS)),
+        Column('port',     types.Integer))
 
 checkin_table = Table('checkin', metadata,
         Column('id',     types.Integer, primary_key=True),  # auto generated

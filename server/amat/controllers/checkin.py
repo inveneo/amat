@@ -33,12 +33,13 @@ class CheckinController(BaseController):
 
         # see if there is a command for this client
         command = 'establish_tunnel'
-        remote_port = 22
-        local_port = 7004
-        username = 'aX^^#ds'
-        password = 'gb&*23zxncD'
+        server_port = int(host.get_port())
+        client_port = 7004
+        username = host.get_username()
+        password = host.get_password()
+        # host.set_password() ... switch password
         return 'command=%s\n'     % command + \
-               'remote_port=%d\n' % remote_port + \
-               'local_port=%d\n'  % local_port + \
+               'server_port=%d\n' % server_port + \
+               'client_port=%d\n' % client_port + \
                'username=%s\n'    % username + \
                'password=%s\n'    % password

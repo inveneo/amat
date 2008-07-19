@@ -3,6 +3,8 @@ import logging
 from amat.lib.base import *
 from amat.model import Session, Host
 
+SSHD_PORT = 22
+
 log = logging.getLogger(__name__)
 
 class RegController(BaseController):
@@ -18,9 +20,12 @@ class RegController(BaseController):
         # look for a record of this host, else start a new one
         host_q = Session.query(Host)
         c.host = host_q.filter_by(mac=mac).first()
-        if not c.host:
+        if c.host:
+            c.host.brand_new = False
+        else:
             try:
                 c.host = Host(mac)
+                c.host.brand_new = True
             except Exception, e:
                 abort(400, str(e))
 
@@ -49,6 +54,23 @@ class RegController(BaseController):
             c.host.set_opperiod(d.get('opperiod', u''))
         except:
             abort(400, 'Invalid opperiod')
+        try:
+            c.host.set_username(u'M%012x' % mac)
+        except:
+            abort(400, 'Invalid username')
+        try:
+            c.host.set_password()
+        except:
+            abort(400, 'Invalid password')
+        try:
+            c.host.set_port(SSHD_PORT)
+        except:
+            abort(400, 'Invalid port')
+
+        if c.host.brand_new:
+            h.admit_to_jail(str(c.host.get_username()))
+            h.set_password(str(c.host.get_username()),
+                    str(c.host.get_password()))
 
         # create or update the record
         Session.save_or_update(c.host)
