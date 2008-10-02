@@ -1,9 +1,10 @@
+# reg.py - controller that registers new clients
+# (c) Inveneo 2008
+
 import logging
 
 from amat.lib.base import *
 from amat.model import Session, Host
-
-SSHD_PORT = 22
 
 log = logging.getLogger(__name__)
 
@@ -12,8 +13,7 @@ class RegController(BaseController):
     def index(self):
         d = request.GET
         try:
-            mac = int(d['mac'], 16)
-            assert mac == mac & 0xFFFFFFFFFFFF, 'mac: bad value'
+            mac = h.mac_str_to_int(d['mac'])
         except:
             abort(400, 'Missing or invalid mac')
 
@@ -54,21 +54,28 @@ class RegController(BaseController):
             c.host.set_opperiod(d.get('opperiod', u''))
         except:
             abort(400, 'Invalid opperiod')
+        username = None
         try:
-            c.host.set_username(u'M%012x' % mac)
+            username = h.mac_int_to_username(mac)
+        except Exception, e:
+            abort(400, 'Invalid username: "0x%x": %s' % (mac, str(e)))
+        try:
+            c.host.set_username(username)
         except:
-            abort(400, 'Invalid username')
+            abort(400, 'Invalid username: "%s"' % username)
         try:
-            c.host.set_password()
+            c.host.set_random_password()
         except:
             abort(400, 'Invalid password')
         try:
-            c.host.set_port(SSHD_PORT)
+            c.host.set_port(g.SSHD_PORT)
         except:
             abort(400, 'Invalid port')
 
         if c.host.brand_new:
-            h.admit_to_jail(str(c.host.get_username()))
+            retcode = h.admit_to_jail(c.host.get_username(), c.host.get_host())
+            if retcode:
+                abort(500, '%d' % retcode)
             h.set_password(str(c.host.get_username()),
                     str(c.host.get_password()))
 

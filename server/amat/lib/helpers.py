@@ -1,20 +1,38 @@
+# helpers.py
+# (c) Inveneo 2008
+
 """Helper functions
 
 Consists of functions to typically be used within templates, but also
 available to Controllers. This module is available to both as 'h'.
 """
 
+from pylons import g
 from webhelpers import *
-from subprocess import call
-import pexpect
+from subprocess import check_call
+import os.path, pexpect
 
 USERADD = '/usr/sbin/useradd'
-RSSH = '/usr/bin/rssh'
-PASSWD = '/usr/bin/passwd'
+RSSH    = '/usr/bin/rssh'
+PASSWD  = '/usr/bin/passwd'
 
-def admit_to_jail(username):
+BASE_DIR = '/jail/home'
+SKEL_DIR = '/jail/skel'
+GROUP    = 'jailbird'
+
+def admit_to_jail(username, comment):
     """Add a new user to the jail."""
-    call([USERADD, '--shell', RSSH, username])
+    login = str(username)
+    comment = str(comment)
+    home_dir = os.path.join(BASE_DIR, str(username))
+    check_call([USERADD,
+        '--comment', comment,
+        '--gid', GROUP,
+        '--create-home',
+        '--home-dir', home_dir,
+        '-k', SKEL_DIR,
+        '--shell', RSSH,
+        login])
 
 def set_password(username, password):
     """Set the password for a user."""
@@ -24,3 +42,13 @@ def set_password(username, password):
             'Retype new UNIX password:': '%s\n' % password
             }
     return pexpect.run(command, withexitstatus=True, events=events)
+
+def mac_str_to_int(s):
+    """Convert MAC from string to integer."""
+    mac = int(s, 16)
+    assert mac == mac & 0xFFFFFFFFFFFF, 'bad mac value "%s"' % s
+    return mac
+
+def mac_int_to_username(mac):
+    """Convert MAC to associated username."""
+    return u'%s%012x' % (g.USER_PREFIX, mac)

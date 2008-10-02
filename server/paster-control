@@ -16,8 +16,8 @@
 DAEMON=/usr/bin/paster
 LOGFILE="/var/log/paster.log"
 DAEMON_OPTS=" serve --log-file $LOGFILE --reload development.ini"
-RUN_AS=inveneo
-APP_PATH=/home/inveneo/amat/trunk/server
+RUN_AS=root
+APP_PATH=/home/jwiggins/amat/trunk/server
 PID_FILE=/var/run/paster.pid
 NAME="paster"
 ############### END EDIT ME ##################

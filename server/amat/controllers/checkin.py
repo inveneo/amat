@@ -1,3 +1,6 @@
+# checkin.py - controller for clients checking in with server
+# (c) Inveneo 2008
+
 import logging
 
 from amat.lib.base import *
@@ -10,8 +13,7 @@ class CheckinController(BaseController):
     def index(self):
         d = request.GET
         try:
-            mac = int(d['mac'], 16)
-            assert mac == mac & 0xFFFFFFFFFFFF, 'mac: bad value'
+            mac = h.mac_str_to_int(d['mac'])
         except:
             abort(400, 'Missing or invalid mac')
 
@@ -23,10 +25,12 @@ class CheckinController(BaseController):
             abort(400, 'Not one host with this mac')
 
         # put it in the database
+        status = d['status']
         try:
-            c.checkin = Checkin(mac, d['status'])
-        except:
-            abort(400, 'Missing or invalid data')
+            c.checkin = Checkin(mac, status)
+        except Exception, e:
+            abort(400, 'Missing or invalid data: (%012x,%s): "%s"' %
+                    (mac, status, str(e)))
 
         Session.save_or_update(c.checkin)
         Session.commit()
@@ -37,7 +41,7 @@ class CheckinController(BaseController):
         client_port = 7004
         username = host.get_username()
         password = host.get_password()
-        # host.set_password() ... switch password
+        # host.set_random_password() ... switch password
         return 'command=%s\n'     % command + \
                'server_port=%d\n' % server_port + \
                'client_port=%d\n' % client_port + \
