@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # helpers.py
 # (c) Inveneo 2008
 
@@ -11,6 +12,7 @@ from pylons import g
 from webhelpers import *
 from subprocess import check_call
 import os.path, pexpect
+import socket
 
 USERADD = '/usr/sbin/useradd'
 RSSH    = '/usr/bin/rssh'
@@ -52,3 +54,14 @@ def mac_str_to_int(s):
 def mac_int_to_username(mac):
     """Convert MAC to associated username."""
     return u'%s%012x' % (g.USER_PREFIX, mac)
+
+def get_free_port():
+    """Get a high port that is free (at the moment)"""
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((socket.gethostbyname(socket.gethostname()), 0))
+    ipaddr, port = s.getsockname()
+    return port
+
+if __name__ == '__main__':
+    print get_free_port()
+
