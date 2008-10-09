@@ -5,6 +5,7 @@ import string
 from pylons import config
 
 g = config['pylons.g']
+h = config['pylons.h']
 
 class Host(object):
     """This object describes a Host out there in the world that wants to
@@ -23,7 +24,7 @@ class Host(object):
         self.opperiod = u'undefined'
         self.username = u'undefined'
         self.password = u'undefined'
-        self.port = g.SSHD_PORT
+        self.port = h.get_free_port()
 
     # accessors - all return strings
     def get_mac(self):  return '%012x' % self.mac

@@ -36,9 +36,9 @@ class CheckinController(BaseController):
         Session.commit()
 
         # see if there is a command for this client
-        command = 'establish_tunnel'
+        command = 'open_tunnel'
         server_port = int(host.get_port())
-        client_port = 7004
+        client_port = 22
         username = host.get_username()
         password = host.get_password()
         # host.set_random_password() ... switch password

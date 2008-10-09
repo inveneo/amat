@@ -68,7 +68,7 @@ class RegController(BaseController):
         except:
             abort(400, 'Invalid password')
         try:
-            c.host.set_port(g.SSHD_PORT)
+            c.host.set_port(h.get_free_port())
         except:
             abort(400, 'Invalid port')
 
