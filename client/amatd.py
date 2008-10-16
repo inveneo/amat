@@ -3,31 +3,128 @@
 # amatd.py
 # (c) Inveneo 2008
 
-import os, daemonize
+import os, time, signal
+import daemonize
 
-if __name__ == "__main__":
+############
+# CONSTANTS
+############
 
-    retCode = daemonize.createDaemon(os.getcwd())
+#LOGFILE = '/var/log/amatd.log'
+LOGFILE = 'logfile'
 
-    procParams = """
-    return code = %s
-    process ID = %s
-    parent process ID = %s
-    process group ID = %s
-    session ID = %s
-    user ID = %s
-    effective user ID = %s
-    real group ID = %s
-    effective group ID = %s
-    """ % (retCode, os.getpid(), os.getppid(), os.getpgrp(), os.getsid(0),
-    os.getuid(), os.geteuid(), os.getgid(), os.getegid())
+MIN_WAIT_SECS = 10      # seconds to sleep, initially (10m)
+MAX_WAIT_SECS = 60      # seconds to sleep, at most (1hr)
 
-    open("createDaemon.log", "w").write(procParams + "\n")
+CMD_OPEN_TUNNEL  = 'open_tunnel'
+CMD_CLOSE_TUNNEL = 'close_tunnel'
 
-    # uncomment this if you want daemon to stay alive
-    import time
-    while 1:
-        time.sleep(1)
+InternalError = Exception("Internal Error")
 
-    sys.exit(retCode)
+############
+# FUNCTIONS
+############
+
+def openLogfile():
+    global logfile
+    logfile = open(LOGFILE, 'a')
+    return True
+
+def closeLogfile():
+    global logfile
+    logfile.close()
+
+def logEvent(s):
+    global logfile
+    stamp = time.asctime()
+    logfile.write('%s: %s\n' % (stamp, s))
+    logfile.flush()
+
+def configHasChanged():
+    return True
+
+def register():
+    """Returns None if no connection made, else HTTP status as int."""
+    logEvent('register()')
+    return None
+
+def resetBackoff():
+    """Reset the sleep time to its lowest value."""
+    global sleepSecs
+    sleepSecs = MIN_WAIT_SECS
+
+def sleepTime(backoff=True):
+    """Returns number of seconds to sleep, does exponential backoff."""
+    global sleepSecs
+    t = sleepSecs
+    if backoff:
+        sleepSecs = min(sleepSecs * 2, MAX_WAIT_SECS)
+    return t
+
+def checkin():
+    """Returns (status, command) tuple, where:
+    status is None if no connection made, else HTTP status as int, and
+    command is list of command name followed by args, or empty list."""
+    logEvent('checkin()')
+    status = None
+    command = []
+    return (status, command)
+
+def doRegistration():
+    """Keep trying forever until registered."""
+    global hangup
+    registered = False
+    resetBackoff()
+    while not registered and not hangup:
+        status = register()
+        if status == 200:
+            registered = True
+        elif status in [None, 500]:
+            time.sleep(sleepTime())
+        else:
+            raise InternalError
+
+def doCommand(command):
+    """Execute the given command."""
+    return True
+
+def sighup(number, frame):
+    global hangup
+    hangup = True
+
+#############
+# START HERE
+#############
+
+retCode = daemonize.becomeDaemon(os.getcwd())
+openLogfile()
+try:
+    logEvent('Starting (pid=%d)' % os.getpid())
+    hangup = False
+    signal.signal(signal.SIGHUP, sighup)
+    resetBackoff()
+    while not hangup:
+        if configHasChanged():
+            doRegistration()        # won't return until registered or hangup
+        if hangup:
+            break
+        (status, command) = checkin()
+        if status == 200:
+            if command:
+                doCommand(command)
+            resetBackoff()
+        elif status in [None, 500]:
+            pass
+        elif status == 404:
+            doRegistration()    # won't return until registered or hangup
+            if hangup:
+                break
+            continue
+        else:
+            raise InternalError
+        time.sleep(sleepTime())
+except Exception, e:
+    logEvent('%s [%d]' % (e.strerror, e.errno))
+logEvent('Stopping')
+closeLogfile()
 

@@ -7,7 +7,7 @@ MAXFD     = 1024
 DEV_NULL  = "/dev/null"
 DEV_PTS_0 = "/dev/pts/0"
 
-def createDaemon(workdir="/"):
+def becomeDaemon(workdir="/"):
     """Detach a process from the controlling terminal and run it in the
     background as a daemon.
     """
@@ -65,7 +65,7 @@ def createDaemon(workdir="/"):
 
 if __name__ == "__main__":
 
-    retCode = createDaemon(os.getcwd())
+    retCode = becomeDaemon(os.getcwd())
 
     procParams = """
     return code = %s
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     """ % (retCode, os.getpid(), os.getppid(), os.getpgrp(), os.getsid(0),
     os.getuid(), os.geteuid(), os.getgid(), os.getegid())
 
-    open("createDaemon.log", "w").write(procParams + "\n")
+    open("becomeDaemon.log", "w").write(procParams + "\n")
 
     # uncomment this if you want daemon to stay alive
     import time
