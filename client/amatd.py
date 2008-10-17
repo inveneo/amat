@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 
-# amatd.py
+# amatd.py - the client daemon for the AMAT system
+#
+# This daemon will attempt to register this machine with the Inveneo
+# AMAT server, do periodic check in, and execute any commands that
+# are requested by the server.
+#
 # (c) Inveneo 2008
 
 import os, time, signal
@@ -10,8 +15,7 @@ import daemonize
 # CONSTANTS
 ############
 
-#LOGFILE = '/var/log/amatd.log'
-LOGFILE = 'logfile'
+LOGFILE = '/var/log/amatd.log'
 
 MIN_WAIT_SECS = 10      # seconds to sleep, initially (10m)
 MAX_WAIT_SECS = 60      # seconds to sleep, at most (1hr)
@@ -43,11 +47,6 @@ def logEvent(s):
 def configHasChanged():
     return True
 
-def register():
-    """Returns None if no connection made, else HTTP status as int."""
-    logEvent('register()')
-    return None
-
 def resetBackoff():
     """Reset the sleep time to its lowest value."""
     global sleepSecs
@@ -61,6 +60,29 @@ def sleepTime(backoff=True):
         sleepSecs = min(sleepSecs * 2, MAX_WAIT_SECS)
     return t
 
+def handleSighup(number, frame):
+    global gotSighup
+    gotSighup = True
+
+def register():
+    """Returns None if no connection made, else HTTP status as int."""
+    logEvent('register()')
+    return None
+
+def doRegistration():
+    """Keep trying forever until registered or SIGHUP."""
+    global gotSighup
+    registered = False
+    resetBackoff()
+    while not registered and not gotSighup:
+        status = register()
+        if status == 200:
+            registered = True
+        elif status in [None, 500]:
+            time.sleep(sleepTime())
+        else:
+            raise InternalError
+
 def checkin():
     """Returns (status, command) tuple, where:
     status is None if no connection made, else HTTP status as int, and
@@ -70,27 +92,9 @@ def checkin():
     command = []
     return (status, command)
 
-def doRegistration():
-    """Keep trying forever until registered."""
-    global hangup
-    registered = False
-    resetBackoff()
-    while not registered and not hangup:
-        status = register()
-        if status == 200:
-            registered = True
-        elif status in [None, 500]:
-            time.sleep(sleepTime())
-        else:
-            raise InternalError
-
 def doCommand(command):
     """Execute the given command."""
     return True
-
-def sighup(number, frame):
-    global hangup
-    hangup = True
 
 #############
 # START HERE
@@ -98,15 +102,15 @@ def sighup(number, frame):
 
 retCode = daemonize.becomeDaemon(os.getcwd())
 openLogfile()
+logEvent('Starting (pid=%d)' % os.getpid())
 try:
-    logEvent('Starting (pid=%d)' % os.getpid())
-    hangup = False
-    signal.signal(signal.SIGHUP, sighup)
+    gotSighup = False
+    signal.signal(signal.SIGHUP, handleSighup)
     resetBackoff()
-    while not hangup:
+    while not gotSighup:
         if configHasChanged():
-            doRegistration()        # won't return until registered or hangup
-        if hangup:
+            doRegistration()        # won't return until registered or SIGHUP
+        if gotSighup:
             break
         (status, command) = checkin()
         if status == 200:
@@ -116,15 +120,16 @@ try:
         elif status in [None, 500]:
             pass
         elif status == 404:
-            doRegistration()    # won't return until registered or hangup
-            if hangup:
+            doRegistration()    # won't return until registered or SIGHUP
+            if gotSighup:
                 break
             continue
         else:
             raise InternalError
         time.sleep(sleepTime())
 except Exception, e:
-    logEvent('%s [%d]' % (e.strerror, e.errno))
-logEvent('Stopping')
-closeLogfile()
+    logEvent(repr(e))
+finally:
+    logEvent('Stopping')
+    closeLogfile()
 
