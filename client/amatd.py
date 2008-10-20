@@ -7,9 +7,11 @@
 # AMAT server, do periodic check in, and execute any commands that
 # are requested by the server.
 #
+# Connections to AMAT server are attempted in exponential backoff fashion.
+#
 # (c) Inveneo 2008
 
-import os, time, signal, urllib
+import os, time, signal, urllib, urllib2
 import daemonize
 
 ############
@@ -57,7 +59,8 @@ def logEvent(s):
 
 def readConfig():
     """Read the config file."""
-    pass
+    global gotSIGHUP
+    gotSIGHUP = False
 
 def resetBackoff():
     """Reset the sleep time to its lowest value."""
@@ -65,7 +68,7 @@ def resetBackoff():
     sleepSecs = MIN_WAIT_SECS
 
 def sleepTime(backoff=True):
-    """Returns number of seconds to sleep, does exponential backoff."""
+    """Returns number of seconds to sleep; does exponential backoff."""
     global sleepSecs
     seconds = sleepSecs
     if backoff:
@@ -89,7 +92,7 @@ def getHostname():
     return CANNED_HOST[0:50]
 
 def register():
-    """Returns None if no connection made, else HTTP status as string."""
+    """Returns None if no connection made, else HTTP status as int."""
     plist = [('mac', getMAC())]
     plist.append(('type', CANNED_TYPE))
     plist.append(('host', getHostname()))
@@ -101,32 +104,54 @@ def register():
     url = 'http://%s:%d/reg?%s' % (AMAT_SERVER, AMAT_PORT, params)
     logEvent('register(%s)' % url)
     try:
-        f = urllib.urlopen(url)
+        f = urllib2.urlopen(url)
     except IOError, e:
-        return None
-    return f.headers.status.split()[0]
+        if hasattr(e, 'reason'):
+            return None
+        elif hasattr(e, 'code'):
+            return e.code
+        else:
+            raise InternalError
+    return 200
 
 def doRegistration():
     """Keep trying forever until registered or SIGTERM."""
     global gotSIGTERM
     registered = False
-    resetBackoff()
     while not registered and not gotSIGTERM:
         status = register()
-        if status == '200':
+        if status == 200:
             registered = True
-        elif status in [None, '500']:
+            resetBackoff()
+        elif status in [None, 500]:
             time.sleep(sleepTime())
         else:
             raise InternalError
 
 def checkin():
     """Returns (status, command) tuple, where:
-    status is None if no connection made, else HTTP status as string, and
+    status is None if no connection made, else HTTP status as int, and
     command is list of command name followed by args, or empty list."""
-    logEvent('checkin()')
+    plist = [('mac', getMAC())]
+    plist.append(('status', 'ok'))
+    params = urllib.urlencode(plist)
+    url = 'http://%s:%d/checkin?%s' % (AMAT_SERVER, AMAT_PORT, params)
+    logEvent('checkin(%s)' % url)
     status = None
-    command = []
+    command = None
+    try:
+        f = urllib2.urlopen(url)
+    except IOError, e:
+        if hasattr(e, 'reason'):
+            pass
+        elif hasattr(e, 'code'):
+            status = e.code
+        else:
+            raise InternalError
+    else:
+        status = 200
+        # XXX should wrap in try block in case result is cut short
+        command = f.read()
     return (status, command)
 
 def doCommand(command):
@@ -148,7 +173,7 @@ try:
     signal.signal(signal.SIGTERM, handleSignal)
 
     # more initial configuration
-    resetBackoff()      # reset exponential backoff of retry attempts
+    resetBackoff()
     readConfig()
 
     # loop forever until signaled to terminate
@@ -163,13 +188,13 @@ try:
 
         # check in with the AMAT server
         (status, command) = checkin()
-        if status == '200':
+        if status == 200:
             if command:
                 doCommand(command)
             resetBackoff()
-        elif status in [None, '500']:
+        elif status in [None, 500]:
             pass
-        elif status == '404':   # not registered yet, so do that first
+        elif status == 404:     # not registered yet, so do that first
             doRegistration()    # won't return until registered or SIGTERM
             if gotSIGTERM:
                 break
