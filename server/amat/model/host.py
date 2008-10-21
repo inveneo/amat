@@ -22,9 +22,6 @@ class Host(object):
         self.lat = 0.0
         self.lon = 0.0
         self.opperiod = u'undefined'
-        self.username = u'undefined'
-        self.password = u'undefined'
-        self.port = h.get_free_port()
 
     # accessors - all return strings
     def get_mac(self):  return '%012x' % self.mac
@@ -34,9 +31,6 @@ class Host(object):
     def get_desc(self): return self.desc
     def get_geo(self):  return '%f,%f' % (self.lat, self.lon)
     def get_opperiod(self): return self.opperiod
-    def get_username(self): return self.username
-    def get_password(self): return self.password
-    def get_port(self): return '%d' % self.port
 
     # mutators - all take unicode strings, or int, or nothing
     def set_type(self, tipe):
@@ -72,26 +66,6 @@ class Host(object):
         assert type(opperiod) == unicode, 'opperiod: not unicode'
         self.opperiod = opperiod[0:g.SIZE_OPPERIOD]
 
-    def set_username(self, username):
-        assert type(username) == unicode, 'username: not unicode'
-        self.username = username[0:g.SIZE_USER]
-
-    def set_random_password(self):
-        """No argument: always assigns random value."""
-        # create string of 64 (2 ** 6) unique symbols to choose from
-        passchars = string.letters + string.digits + ".-"
-        self.password = u''
-        fp = open('/dev/urandom', 'rb')
-        # entropy is (nearly) 6 bits per symbol times SIZE_PASS symbols
-        for i in range(g.SIZE_PASS):
-            byte = ord(fp.read(1)) # get eight bits of nice randomness
-            self.password += passchars[byte >> 2] # just use six of them
-        fp.close()
-
-    def set_port(self, port):
-        assert type(port) == int, 'port: not int'
-        self.port = port
-
     def __str__(self):
         return ('mac=%s\n'      % self.get_mac())  + \
                ('type=%s\n'     % self.get_type()) + \
@@ -99,8 +73,5 @@ class Host(object):
                ('cust=%s\n'     % self.get_cust()) + \
                ('desc=%s\n'     % self.get_desc()) + \
                ('geo=%s\n'      % self.get_geo())  + \
-               ('opperiod=%s\n' % self.get_opperiod()) + \
-               ('username=%s\n' % self.get_username()) + \
-               ('password=%s\n' % self.get_password()) + \
-               ('port=%s\n'     % self.get_port())
+               ('opperiod=%s\n' % self.get_opperiod())
 

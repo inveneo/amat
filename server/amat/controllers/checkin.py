@@ -4,7 +4,7 @@
 import logging
 
 from amat.lib.base import *
-from amat.model import Session, Host, Checkin
+from amat.model import Session, Host, Checkin, Tunnel
 
 log = logging.getLogger(__name__)
 
@@ -17,14 +17,14 @@ class CheckinController(BaseController):
         except:
             abort(400, 'Missing or invalid mac')
 
-        # look for a record of this host, else start a new one
+        # look for a record of this host
         host_q = Session.query(Host)
         try:
             host = host_q.filter_by(mac=mac).one()
         except:
             abort(400, 'Not one host with this mac')
 
-        # put it in the database
+        # put checkin in the database
         status = d['status']
         try:
             c.checkin = Checkin(mac, status)
@@ -36,14 +36,18 @@ class CheckinController(BaseController):
         Session.commit()
 
         # see if there is a command for this client
-        command = 'open_tunnel'
-        server_port = int(host.get_port())
-        client_port = 22
-        username = host.get_username()
-        password = host.get_password()
-        # host.set_random_password() ... switch password
-        return 'command=%s\n'     % command + \
-               'server_port=%d\n' % server_port + \
-               'client_port=%d\n' % client_port + \
-               'username=%s\n'    % username + \
-               'password=%s\n'    % password
+        resp = ''
+        tunnel_q = Session.query(Tunnel)
+        tunnel = tunnel_q.filter_by(mac=mac).first()
+        if tunnel:
+            command = 'open_tunnel'
+            server_port = int(host.get_port())
+            username = host.get_username()
+            password = host.get_password()
+            resp = 'command=%s\n'     % command + \
+                   'server_port=%d\n' % server_port + \
+                   'client_port=22\n' + \
+                   'username=%s\n'    % username + \
+                   'password=%s\n'    % password
+        return resp
+

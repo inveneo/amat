@@ -6,6 +6,7 @@ from sqlalchemy import types, MetaData, Column, Table, ForeignKey
 from sqlalchemy.orm import mapper, scoped_session, sessionmaker
 from host import Host
 from checkin import Checkin
+from tunnel import Tunnel
 
 g = config['pylons.g']
 
@@ -22,10 +23,7 @@ host_table = Table('host', metadata,
         Column('desc',     types.Unicode(g.SIZE_DESC)),
         Column('lat',      types.Float),                      # from geo
         Column('lon',      types.Float),                      # from geo
-        Column('opperiod', types.Unicode(g.SIZE_OPPERIOD)),
-        Column('username', types.Unicode(g.SIZE_USER)),
-        Column('password', types.Unicode(g.SIZE_PASS)),
-        Column('port',     types.Integer))
+        Column('opperiod', types.Unicode(g.SIZE_OPPERIOD)))
 
 checkin_table = Table('checkin', metadata,
         Column('id',     types.Integer, primary_key=True),  # auto generated
@@ -33,6 +31,14 @@ checkin_table = Table('checkin', metadata,
         Column('status', types.Unicode(g.SIZE_STATUS)),
         Column('tstamp', types.Float))
 
+tunnel_table = Table('tunnel', metadata,
+        Column('id',     types.Integer, primary_key=True),  # auto generated
+        Column('mac',    types.Integer, ForeignKey('host.mac')),
+        Column('username', types.Unicode(g.SIZE_USER)),
+        Column('password', types.Unicode(g.SIZE_PASS)),
+        Column('port',     types.Integer))
+
 mapper(Host, host_table)
 mapper(Checkin, checkin_table)
+mapper(Tunnel, checkin_table)
 

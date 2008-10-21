@@ -4,7 +4,7 @@
 import logging
 
 from amat.lib.base import *
-from amat.model import Session, Host
+from amat.model import Session, Host, Tunnel
 
 log = logging.getLogger(__name__)
 
@@ -54,35 +54,54 @@ class RegController(BaseController):
             c.host.set_opperiod(d.get('opperiod', u''))
         except:
             abort(400, 'Invalid opperiod')
-        username = None
-        try:
-            username = h.mac_int_to_username(mac)
-        except Exception, e:
-            abort(400, 'Invalid username: "0x%x": %s' % (mac, str(e)))
-        try:
-            c.host.set_username(username)
-        except:
-            abort(400, 'Invalid username: "%s"' % username)
-        try:
-            c.host.set_random_password()
-        except:
-            abort(400, 'Invalid password')
-        try:
-            c.host.set_port(h.get_free_port())
-        except:
-            abort(400, 'Invalid port')
 
-        if c.host.brand_new:
-            retcode = h.admit_to_jail(c.host.get_username(), c.host.get_host())
+        Session.save_or_update(c.host)
+        Session.commit()
+
+        # look for its tunnel, else set up a new one
+        tunnel_q = Session.query(Tunnel)
+        c.tunnel = tunnel_q.filter_by(mac=mac).first()
+        if c.tunnel:
+            c.tunnel.brand_new = False
+        else:
+            try:
+                c.tunnel = Tunnel(mac)
+                c.tunnel.brand_new = True
+            except Exception, e:
+                abort(400, str(e))
+
+        # create attributes for new tunnels
+        if c.tunnel.brand_new:
+            username = None
+            try:
+                username = h.mac_int_to_username(mac)
+            except Exception, e:
+                abort(400, 'Invalid username: "0x%x": %s' % (mac, str(e)))
+            try:
+                c.tunnel.set_username(username)
+            except:
+                abort(400, 'Invalid username: "%s"' % username)
+            try:
+                c.tunnel.set_random_password()
+            except:
+                abort(400, 'Invalid password')
+            try:
+                c.tunnel.set_port(h.get_free_port())
+            except:
+                abort(400, 'Invalid port')
+
+            # create unix account
+            retcode = h.admit_to_jail(c.tunnel.get_username(),
+                    c.host.get_host())
             if retcode:
                 abort(500, '%d' % retcode)
-            h.set_password(str(c.host.get_username()),
-                    str(c.host.get_password()))
+            h.set_password(str(c.tunnel.get_username()),
+                    str(c.tunnel.get_password()))
 
-        # create or update the record
-        Session.save_or_update(c.host)
+        Session.save_or_update(c.tunnel)
         Session.commit()
 
         if d.has_key('debug'):
             return render('/reg.mako')
         return ''
+
