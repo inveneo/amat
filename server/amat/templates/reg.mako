@@ -24,5 +24,21 @@
 <td>${c.host.get_opperiod()}</td>
 </tr>
 </table>
+
+<h3>I made tunnel record:</h3>
+<tr>
+<th>id</th>
+<th>mac</th>
+<th>username</th>
+<th>password</th>
+<th>port</th>
+</tr>
+<tr>
+<td>${c.tunnel.get_id()}</td>
+<td>${c.tunnel.get_mac()}</td>
+<td>${c.tunnel.get_username()}</td>
+<td>${c.tunnel.get_password()}</td>
+<td>${c.tunnel.get_port()}</td>
+</tr>
 </body>
 </html>

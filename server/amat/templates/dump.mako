@@ -13,9 +13,6 @@
 <th>desc</th>
 <th>geo</th>
 <th>opperiod</th>
-<th>username</th>
-<th>password</th>
-<th>port</th>
 </tr>
 % for host in c.hosts:
 <td>${host.get_mac()}</td>
@@ -25,6 +22,20 @@
 <td>${host.get_desc()}</td>
 <td>${host.get_geo()}</td>
 <td>${host.get_opperiod()}</td>
+</tr>
+% endfor
+</table>
+
+<h3>tunnels</h3>
+<table cellpadding="5" border="1">
+<tr>
+<th>mac</th>
+<th>username</th>
+<th>password</th>
+<th>port</th>
+</tr>
+% for tunnel in c.tunnels:
+<td>${host.get_mac()}</td>
 <td>${host.get_username()}</td>
 <td>${host.get_password()}</td>
 <td>${host.get_port()}</td>
