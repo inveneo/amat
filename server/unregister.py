@@ -1,51 +1,64 @@
 #!/usr/bin/env python
-# unregister.py - a script to forcibly unregister a username from AMAT system
+# unregister.py - a script to forcibly unregister a MAC from AMAT system
 # (c) Inveneo 2008
 
 import os, sys, sqlite3, subprocess
 
 USERDEL = '/usr/sbin/userdel'
+USER_PREFIX = '_'
 ERR_USAGE    = 1
 ERR_NOT_ROOT = 2
 
 def running_as_root():
     return os.getuid() == 0
 
-# START HERE
-if len(sys.argv) < 2:
-    print 'Usage: %s <username>' % sys.argv[0]
-    sys.exit(ERR_USAGE)
-username = sys.argv[1]
+def mac_str_to_int(s):
+    """Convert MAC from string to integer."""
+    mac = int(s, 16)
+    assert mac == mac & 0xFFFFFFFFFFFF, 'Bad MAC value "%s"' % s
+    return mac
 
-if not running_as_root():
-    print 'You must be root to run this program'
-    sys.exit(ERR_NOT_ROOT)
+def mac_int_to_str(n):
+    return '%012x' % n
 
-conn = sqlite3.connect('data/amat.db')
-c = conn.cursor()
+def mac_int_to_username(mac):
+    """Convert MAC to associated username."""
+    return u'%s%012x' % (USER_PREFIX, mac)
 
-# make a list of MAC addresses that map to this username
-c.execute('SELECT mac FROM host WHERE username=?', (username,))
-maclist = []
-for row in c:
-    mac = row[0]
-    print 'Found MAC %012x' % mac
-    maclist.append(mac)
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print 'Usage: %s <MAC Address>' % sys.argv[0]
+        sys.exit(ERR_USAGE)
+    imac = mac_str_to_int(sys.argv[1])
+    smac = mac_int_to_str(imac)
 
-# remove checkin and host entries
-print 'Deleting from database...'
-for mac in maclist:
-    c.execute('DELETE FROM checkin WHERE mac=?', (mac,))
+    if not running_as_root():
+        print 'You must be root to run this program'
+        sys.exit(ERR_NOT_ROOT)
+
+    conn = sqlite3.connect('data/amat.db')
+    c = conn.cursor()
+
+    # remove tunnel and checkin and host entries
+    print 'Deleting from database...'
+    c.execute('DELETE FROM tunnel WHERE mac=?', (smac,))
     for row in c:
         print row
-    c.execute('DELETE FROM host WHERE mac=?', (mac,))
+    c.execute('DELETE FROM checkin WHERE mac=?', (smac,))
+    for row in c:
+        print row
+    c.execute('DELETE FROM host WHERE mac=?', (smac,))
     for row in c:
         print row
 
-print 'Changes:', conn.total_changes
-conn.commit()
-conn.close()
+    print 'Changes:', conn.total_changes
+    conn.commit()
+    conn.close()
 
-# delete the login and home dir
-print 'Deleting login and home dir...'
-subprocess.call([USERDEL, '-r', username])
+    # delete the login and home dir
+    print 'Deleting login and home dir...'
+    username = mac_int_to_username(imac)
+    subprocess.call([USERDEL, '-r', username])
+
+    print 'Done.'
+

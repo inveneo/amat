@@ -35,10 +35,10 @@
 <th>port</th>
 </tr>
 % for tunnel in c.tunnels:
-<td>${host.get_mac()}</td>
-<td>${host.get_username()}</td>
-<td>${host.get_password()}</td>
-<td>${host.get_port()}</td>
+<td>${tunnel.get_mac()}</td>
+<td>${tunnel.get_username()}</td>
+<td>${tunnel.get_password()}</td>
+<td>${tunnel.get_port()}</td>
 </tr>
 % endfor
 </table>

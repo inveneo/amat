@@ -48,8 +48,11 @@ def set_password(username, password):
 def mac_str_to_int(s):
     """Convert MAC from string to integer."""
     mac = int(s, 16)
-    assert mac == mac & 0xFFFFFFFFFFFF, 'bad mac value "%s"' % s
+    assert mac == mac & 0xFFFFFFFFFFFF, 'Bad MAC value "%s"' % s
     return mac
+
+def mac_int_to_str(n):
+    return '%012x' % n
 
 def mac_int_to_username(mac):
     """Convert MAC to associated username."""

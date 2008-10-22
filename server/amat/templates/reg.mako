@@ -26,6 +26,7 @@
 </table>
 
 <h3>I made tunnel record:</h3>
+<table cellpadding="5" border="1">
 <tr>
 <th>id</th>
 <th>mac</th>
@@ -40,5 +41,7 @@
 <td>${c.tunnel.get_password()}</td>
 <td>${c.tunnel.get_port()}</td>
 </tr>
+</table>
+
 </body>
 </html>

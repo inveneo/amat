@@ -40,5 +40,5 @@ tunnel_table = Table('tunnel', metadata,
 
 mapper(Host, host_table)
 mapper(Checkin, checkin_table)
-mapper(Tunnel, checkin_table)
+mapper(Tunnel, tunnel_table)
 

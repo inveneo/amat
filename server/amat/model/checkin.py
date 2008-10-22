@@ -5,6 +5,7 @@ from time import time
 from pylons import config
 
 g = config['pylons.g']
+h = config['pylons.h']
 
 class Checkin(object):
 
@@ -18,7 +19,7 @@ class Checkin(object):
     # accessors - all return strings
     def get_id(self):     return '%d' % self.id
     def get_tstamp(self): return '%f' % self.tstamp
-    def get_mac(self):    return '%012x' % self.mac
+    def get_mac(self):    return h.mac_int_to_str(self.mac)
     def get_status(self): return '%s' % self.status
 
     # mutators - all take strings

@@ -41,9 +41,9 @@ class CheckinController(BaseController):
         tunnel = tunnel_q.filter_by(mac=mac).first()
         if tunnel:
             command = 'open_tunnel'
-            server_port = int(host.get_port())
-            username = host.get_username()
-            password = host.get_password()
+            server_port = int(tunnel.get_port())
+            username = tunnel.get_username()
+            password = tunnel.get_password()
             resp = 'command=%s\n'     % command + \
                    'server_port=%d\n' % server_port + \
                    'client_port=22\n' + \

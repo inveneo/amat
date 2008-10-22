@@ -24,7 +24,7 @@ class Host(object):
         self.opperiod = u'undefined'
 
     # accessors - all return strings
-    def get_mac(self):  return '%012x' % self.mac
+    def get_mac(self):  return h.mac_int_to_str(self.mac)
     def get_type(self): return self.type
     def get_host(self): return self.host
     def get_cust(self): return self.cust

@@ -1,9 +1,11 @@
 # tunnel.py - the AMAT data model for a TUNNEL
 # (c) Inveneo 2008
 
+import string
 from pylons import config
 
 g = config['pylons.g']
+h = config['pylons.h']
 
 class Tunnel(object):
 
@@ -17,7 +19,7 @@ class Tunnel(object):
 
     # accessors - all return strings
     def get_id(self):       return '%d' % self.id
-    def get_mac(self):      return '%012x' % self.mac
+    def get_mac(self):      return h.mac_int_to_str(self.mac)
     def get_username(self): return self.username
     def get_password(self): return self.password
     def get_port(self):     return '%d' % self.port

@@ -61,17 +61,13 @@ class RegController(BaseController):
         # look for its tunnel, else set up a new one
         tunnel_q = Session.query(Tunnel)
         c.tunnel = tunnel_q.filter_by(mac=mac).first()
-        if c.tunnel:
-            c.tunnel.brand_new = False
-        else:
+        if not c.tunnel:
             try:
                 c.tunnel = Tunnel(mac)
-                c.tunnel.brand_new = True
             except Exception, e:
                 abort(400, str(e))
 
-        # create attributes for new tunnels
-        if c.tunnel.brand_new:
+            # fill in new tunnel record
             username = None
             try:
                 username = h.mac_int_to_username(mac)
@@ -98,8 +94,9 @@ class RegController(BaseController):
             h.set_password(str(c.tunnel.get_username()),
                     str(c.tunnel.get_password()))
 
-        Session.save_or_update(c.tunnel)
-        Session.commit()
+            # store new record
+            Session.save_or_update(c.tunnel)
+            Session.commit()
 
         if d.has_key('debug'):
             return render('/reg.mako')
