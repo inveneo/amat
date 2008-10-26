@@ -4,6 +4,7 @@ amatd.py
 --------
 The AMAT client runs as a daemon.  It is written in Python.
 So it is called amatd.py
+It logs to /var/log/amatd.log
 
 If sent SIGHUP, it will re-read its config file and re-register itself
 with the new parameters and go back to regular checkins.

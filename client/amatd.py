@@ -12,6 +12,7 @@
 # (c) Inveneo 2008
 
 import os, time, signal, urllib, urllib2
+from subprocess import Popen, PIPE, call
 import daemonize
 
 ############
@@ -57,6 +58,16 @@ def logEvent(s):
     stamp = time.asctime()
     logfile.write('%s: %s\n' % (stamp, s))
     logfile.flush()
+
+def responseToDict(s):
+    """Turn a newline-separated string of key=value pairs into a dictionary."""
+    d = {}
+    items = s.split('\n')
+    for item in items:
+        item = item.strip()
+        pair = item.split('=')
+        d[pair[0]] = pair[1]
+    return d
 
 def readConfig():
     """Read the config file."""
@@ -159,10 +170,20 @@ def checkin():
         command = f.read()
     return (status, command)
 
+def tunnelIsOpen():
+    """Return True if a tunnel is found, else False."""
+    # XXX very bogus, but for now OK
+    # XXX this is where the action is... see ya later
+    return False
+
 def doCommand(command):
     """Execute the given command."""
     if command:
         logEvent('command(%s)' % command)
+        d = responseToDict(command)
+        if d['command']  == CMD_OPEN_TUNNEL:
+            if not tunnelIsOpen():
+                openTunnel(d)
 
 #############
 # START HERE
