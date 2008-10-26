@@ -1,4 +1,4 @@
-README for AMAT Client
+README.txt for Automated Monitoring And Tunnels (AMAT) Client
 
 amatd.py
 --------
@@ -16,6 +16,7 @@ A library that creates a bona fide Unix daemon out of your code.  The
 wheel reinvented yet again.  But why not?  Reinvention is fun.
 
 The rest of these...
+
 -rwxr-xr-x 1 inveneo inveneo  148 2008-07-14 18:13 getmac.sh
 -rw-r--r-- 1 inveneo inveneo 3443 2008-10-14 18:14 old_amat_client.py
 -rw-r--r-- 1 inveneo inveneo 1335 2008-10-14 18:14 old_amatd.py

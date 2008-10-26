@@ -18,9 +18,9 @@ import daemonize
 # CONSTANTS
 ############
 
+# XXX all below must move to config file, or be returned by functions
 AMAT_SERVER = 'bb.inveneo.net'
 AMAT_PORT = 5000
-
 CANNED_MAC  = '000000004321'
 CANNED_TYPE = 'hub'
 CANNED_HOST = 'jimhost'
@@ -31,6 +31,7 @@ CANNED_OPPERIOD = ''
 
 LOGFILE = '/var/log/amatd.log'
 
+# XXX make these realistic when done debugging
 MIN_WAIT_SECS = 10      # seconds to sleep, initially (10m)
 MAX_WAIT_SECS = 60      # seconds to sleep, at most (1hr)
 
@@ -61,6 +62,7 @@ def readConfig():
     """Read the config file."""
     global gotSIGHUP
     gotSIGHUP = False
+    pass
 
 def resetBackoff():
     """Reset the sleep time to its lowest value."""
@@ -76,6 +78,7 @@ def sleepTime(backoff=True):
     return seconds
 
 def handleSignal(number, frame):
+    """Sets global flag when signal is received."""
     global gotSIGHUP
     global gotSIGTERM
     if number == signal.SIGHUP:
@@ -121,9 +124,11 @@ def doRegistration():
     while not registered and not gotSIGTERM:
         status = register()
         if status == 200:
+            # OK
             registered = True
             resetBackoff()
         elif status in [None, 500]:
+            # no connection or server error: try again later
             time.sleep(sleepTime())
         else:
             raise InternalError
@@ -156,17 +161,22 @@ def checkin():
 
 def doCommand(command):
     """Execute the given command."""
-    logEvent('command(%s)' % command)
+    if command:
+        logEvent('command(%s)' % command)
 
 #############
 # START HERE
 #############
 
+# turn into spooky daemon owned by init
 retCode = daemonize.becomeDaemon(os.getcwd())
+
+# XXX should use syslogd
 openLogfile()
 logEvent('Starting (pid=%d)' % os.getpid())
 try:
-    # set up signal handling: SIGHUP = re-read config file, SIGTERM = terminate
+    # set up signal handling: SIGHUP = re-read config file, SIGTERM = terminate.
+    # they set global flags which get checked at various logical places
     gotSIGHUP = False
     gotSIGTERM = False
     signal.signal(signal.SIGHUP,  handleSignal)
@@ -189,12 +199,14 @@ try:
         # check in with the AMAT server
         (status, command) = checkin()
         if status == 200:
-            if command:
-                doCommand(command)
+            # OK
+            doCommand(command)
             resetBackoff()
         elif status in [None, 500]:
+            # no connection or server error: try again later
             pass
-        elif status == 404:     # not registered yet, so do that first
+        elif status == 404:
+            # not registered yet, so do that first
             doRegistration()    # won't return until registered or SIGTERM
             if gotSIGTERM:
                 break
