@@ -52,6 +52,7 @@ def mac_str_to_int(s):
     return mac
 
 def mac_int_to_str(n):
+    """Convert MAC from integer to string."""
     return '%012x' % n
 
 def mac_int_to_username(mac):
@@ -59,7 +60,7 @@ def mac_int_to_username(mac):
     return u'%s%012x' % (g.USER_PREFIX, mac)
 
 def get_free_port():
-    """Get a high port that is free (at the moment)"""
+    """Get a high port that is free (at the moment)."""
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((socket.gethostbyname(socket.gethostname()), 0))
     ipaddr, port = s.getsockname()

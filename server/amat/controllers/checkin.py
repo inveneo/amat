@@ -9,8 +9,11 @@ from amat.model import Session, Host, Checkin, Tunnel
 log = logging.getLogger(__name__)
 
 class CheckinController(BaseController):
+    """This controller is activated when a client host wants to check in
+    and receive any commands from the server."""
 
     def index(self):
+        # pull MAC address, the primary key, from query string
         d = request.GET
         try:
             mac = h.mac_str_to_int(d['mac'])

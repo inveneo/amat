@@ -9,8 +9,11 @@ from amat.model import Session, Host, Tunnel
 log = logging.getLogger(__name__)
 
 class RegController(BaseController):
+    """This controller is activated when a client host wants to register
+    itself or change its registration parameters."""
 
     def index(self):
+        # pull MAC address, the primary key, from query string
         d = request.GET
         try:
             mac = h.mac_str_to_int(d['mac'])
