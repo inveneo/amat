@@ -1,4 +1,4 @@
-README.txt for AMAT Server: Automated Monitoring And Tunnels
+README.txt for Automated Monitoring And Tunnels (AMAT) Server
 
 This is a Pylons server that acts as the common endpoint for AMAT tunnels.
 
@@ -24,14 +24,17 @@ $ sudo paster setup-app development.ini
 
 Running the server
 ==================
-# Either...
+Either (preferred)...
 $ sudo /etc/init.d/paster-control start
 
-# ...or...
+...or...
 $ sudo paster serve --reload development.ini
 
-# ...then watch the logfile at /var/log/paster.log
-# ...and watch /var/log/auth.log
+...then watch the logfile at /var/log/paster.log
+$ sudo tail -f /var/log/paster.log
+
+...and watch /var/log/auth.log
+$ sudo tail -f /var/log/auth.log
 
 ====================================
 Notes about this Pylons application:
