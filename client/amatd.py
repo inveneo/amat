@@ -13,7 +13,7 @@
 
 import os, time, signal, urllib, urllib2
 from subprocess import Popen, PIPE, call
-import daemonize
+import daemonize, tunnel
 
 ############
 # CONSTANTS
@@ -22,19 +22,27 @@ import daemonize
 # XXX all below must move to config file, or be returned by functions
 AMAT_SERVER = 'bb.inveneo.net'
 AMAT_PORT = 5000
-CANNED_MAC  = '000000004321'
-CANNED_TYPE = 'hub'
-CANNED_HOST = 'jimhost'
+CANNED_MAC  =  '000000004321'
+CANNED_TYPE =  'hub'
+CANNED_HOST =  'jimhost'
 CANNED_CUST = u'fööd'
 CANNED_DESC = u'some text about fööd'
-CANNED_GEO  = '30.000000,-90.000000'
+CANNED_GEO  =  '30.000000,-90.000000'
 CANNED_OPPERIOD = ''
+USER_PREFIX = '_'
 
 LOGFILE = '/var/log/amatd.log'
 
 # XXX make these realistic when done debugging
 MIN_WAIT_SECS = 10      # seconds to sleep, initially (10m)
 MAX_WAIT_SECS = 60      # seconds to sleep, at most (1hr)
+
+# constants in checkin response
+KEY_COMMAND     = 'command'
+KEY_SERVER      = 'server'
+KEY_SERVER_PORT = 'server_port'
+KEY_USERNAME    = 'username'
+KEY_PASSWORD    = 'password'
 
 CMD_OPEN_TUNNEL  = 'open_tunnel'
 CMD_CLOSE_TUNNEL = 'close_tunnel'
@@ -145,16 +153,16 @@ def doRegistration():
             raise InternalError
 
 def checkin():
-    """Returns (status, command) tuple, where:
+    """Returns (status, response) tuple, where:
     status is None if no connection made, else HTTP status as int, and
-    command is list of command name followed by args, or empty list."""
+    response is list of command name followed by args, or empty list."""
     plist = [('mac', getMAC())]
     plist.append(('status', 'ok'))
     params = urllib.urlencode(plist)
     url = 'http://%s:%d/checkin?%s' % (AMAT_SERVER, AMAT_PORT, params)
     logEvent('checkin(%s)' % url)
     status = None
-    command = None
+    response = None
     try:
         f = urllib2.urlopen(url)
     except IOError, e:
@@ -167,23 +175,18 @@ def checkin():
     else:
         status = 200
         # XXX should wrap in try block in case result is cut short
-        command = f.read()
-    return (status, command)
+        response = f.read()
+    return (status, response)
 
-def tunnelIsOpen():
-    """Return True if a tunnel is found, else False."""
-    # XXX very bogus, but for now OK
-    # XXX this is where the action is... see ya later
-    return False
-
-def doCommand(command):
-    """Execute the given command."""
-    if command:
-        logEvent('command(%s)' % command)
-        d = responseToDict(command)
-        if d['command']  == CMD_OPEN_TUNNEL:
-            if not tunnelIsOpen():
-                openTunnel(d)
+def doCommand(response):
+    """Execute the given response command."""
+    if response:
+        logEvent('response(%s)' % response)
+        if d[KEY_COMMAND] == CMD_OPEN_TUNNEL:
+            if not tunnel.firstTunnelPID(AMAT_SERVER, d[KEY_USERNAME]):
+                tunnel.openTunnel(AMAT_SERVER, d[], d[], d[])
+        elif d[KEY_COMMAND] == CMD_CLOSE_TUNNEL:
+            tunnel.closeTunnel()
 
 #############
 # START HERE
@@ -218,10 +221,10 @@ try:
             break
 
         # check in with the AMAT server
-        (status, command) = checkin()
+        (status, response) = checkin()
         if status == 200:
             # OK
-            doCommand(command)
+            doCommand(response)
             resetBackoff()
         elif status in [None, 500]:
             # no connection or server error: try again later
