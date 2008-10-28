@@ -4,8 +4,8 @@
 # tunnel.py - library for managing SSH tunnels
 # (c) Inveneo 2008
 
-import sys
-from subprocess import Popen, PIPE, check_call
+import sys, re
+from subprocess import Popen, PIPE, call
 
 ############
 # CONSTANTS
@@ -21,27 +21,26 @@ CLIENT_PORT = 22
 # FUNCTIONS
 ############
 
-def firstTunnelPID(server, username):
+def firstTunnelPID(server):
     """Return process ID of first tunnel found, else None."""
-    user_host = '%s@%s' % (username, server)
-    procs = Popen(['ps', '-opid,args='], stdout=PIPE).communicate()[0]
-    match_items = [SSHPASS, SSH, user_host]
+    ps_out = Popen(['ps', '-e', '-opid,args='], stdout=PIPE).communicate()[0]
+    lines = ps_out.split('\n')
+    del lines[0]        # headings we don't want
 
-    # skip first line, as it's a heading, but scan all others for tunnel
-    for line in procs.split('\n')[1:]:
-        count = 0
-        tokens = line.split()
-        for token in tokens:
-            if token in match_items:
-                count += 1
-        if count == len(match_items):
-            return int(tokens[0])
+    # if line looks like SSH tunnel, return first arg (the PID)
+    pat = re.compile('\s*([0-9]*).*%s.*%s.*%s' % (SSHPASS, SSH, server))
+    for line in lines:
+        mat = pat.match(line)
+        if mat:
+            return int(mat.group(1))
     return None
 
-def openTunnel(server, username, password, server_port):
+def openTunnel(server, server_port, username, password):
     """Open tunnel: all params are strings except server_port (int)."""
     port_host_port = '%d:localhost:%d' % (server_port, CLIENT_PORT)
     user_host = '%s@%s' % (username, server)
+
+    # XXX change this to use more secure form of sshpass (read from pipe)
     command_list = [SSHPASS, '-p', password] + \
     [SSH, '-C', '-g', '-N',
             '-o', 'StrictHostKeyChecking=no',
@@ -50,33 +49,29 @@ def openTunnel(server, username, password, server_port):
             '-R', port_host_port, user_host]
     Popen(command_list)
 
-def closeTunnel(server, username):
+def closeTunnel(server):
     """Close tunnel: kill all tunnel processes."""
-    pid = firstTunnelPID(server, username)
+    pid = firstTunnelPID(server)
     while pid:
-        check_call([KILL, str(pid)])
-        pid = firstTunnelPID(server, username)
+        call([KILL, str(pid)])
+        pid = firstTunnelPID(server)
 
 if __name__ == '__main__':
     """Test this puppy by simply toggling tunnel on and off."""
-    if len(sys.argv) < 3:
-        print 'Usage: %s server username [password server_port]' % sys.argv[0]
+    if len(sys.argv) < 2:
+        print 'Usage: %s server [server_port username password]' % sys.argv[0]
         sys.exit(1)
-
-    server   = argv[1] # e.g. "bb.inveneo.net"
-    username = argv[2] # e.g. "_000000004321"
-
-    if not tunnel.firstTunnelPID(server, username):
+    server = sys.argv[1] # e.g. "bb.inveneo.net"
+    if not firstTunnelPID(server):
         if len(sys.argv) < 5:
-            print 'Need username and password to open tunnel.'
+            print 'Need server_port, username and password to open tunnel.'
             sys.exit(1)
-
-        password    = argv[3] # e.g. "IDAwvKwRhM4.7EL7yUYCsnn6-p.ke4hG"
-        server_port = argv[4] # e.g. "56137"
-
+        server_port = int(sys.argv[2]) # e.g. "56137"
+        username    = sys.argv[3]      # e.g. "_000000004321"
+        password    = sys.argv[4]      # e.g. "IDAwvKwRhM4.7EL7yUYCsnn6=p.ke4hG"
         print 'Opening tunnel'
-        tunnel.openTunnel(server, username, password, server_port)
+        openTunnel(server, server_port, username, password)
     else:
         print 'Closing tunnel'
-        tunnel.closeTunnel(server, username)
+        closeTunnel(server)
 
