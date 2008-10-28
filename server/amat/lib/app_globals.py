@@ -1,6 +1,8 @@
 # app_globals.py - globls for the running application
 # (c) Inveneo 2008
 
+import string
+
 """The application's Globals object"""
 from pylons import config
 
@@ -22,6 +24,9 @@ class Globals(object):
     SIZE_STATUS   = 8
     SIZE_USER     = 13
     SIZE_PASS     = 32
+
+    # string of 64 (2 ** 6) unique symbols to choose random passwords from
+    PASSCHARS = string.letters + string.digits + ".="
 
     def __init__(self):
         """One instance of Globals is created during application

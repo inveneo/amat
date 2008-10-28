@@ -1,7 +1,6 @@
 # tunnel.py - the AMAT data model for a TUNNEL
 # (c) Inveneo 2008
 
-import string
 from pylons import config
 
 g = config['pylons.g']
@@ -35,14 +34,12 @@ class Tunnel(object):
 
     def set_random_password(self):
         """No argument: always assigns random value."""
-        # create string of 64 (2 ** 6) unique symbols to choose from
-        passchars = string.letters + string.digits + ".-"
         self.password = u''
         fp = open('/dev/urandom', 'rb')
         # entropy is (nearly) 6 bits per symbol times SIZE_PASS symbols
         for i in range(g.SIZE_PASS):
             byte = ord(fp.read(1)) # get eight bits of nice randomness
-            self.password += passchars[byte >> 2] # just use six of them
+            self.password += g.PASSCHARS[byte >> 2] # just use six of them
         fp.close()
 
     def set_port(self, port):
