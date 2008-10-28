@@ -11,8 +11,7 @@
 #
 # (c) Inveneo 2008
 
-import os, time, signal, urllib, urllib2
-from subprocess import Popen, PIPE, call
+import os, time, signal, urllib, urllib2, traceback
 import daemonize, tunnel
 
 ############
@@ -39,7 +38,6 @@ MAX_WAIT_SECS = 60      # seconds to sleep, at most (1hr)
 
 # constants in checkin response
 KEY_COMMAND     = 'command'
-KEY_SERVER      = 'server'
 KEY_SERVER_PORT = 'server_port'
 KEY_USERNAME    = 'username'
 KEY_PASSWORD    = 'password'
@@ -74,7 +72,8 @@ def responseToDict(s):
     for item in items:
         item = item.strip()
         pair = item.split('=')
-        d[pair[0]] = pair[1]
+        if len(pair) == 2:
+            d[pair[0]] = pair[1]
     return d
 
 def readConfig():
@@ -182,11 +181,17 @@ def doCommand(response):
     """Execute the given response command."""
     if response:
         logEvent('response(%s)' % response)
+        d = responseToDict(response)
         if d[KEY_COMMAND] == CMD_OPEN_TUNNEL:
-            if not tunnel.firstTunnelPID(AMAT_SERVER, d[KEY_USERNAME]):
-                tunnel.openTunnel(AMAT_SERVER, d[], d[], d[])
+            if not tunnel.firstTunnelPID(AMAT_SERVER):
+                logEvent('openTunnel()')
+                tunnel.openTunnel(AMAT_SERVER, int(d[KEY_SERVER_PORT]),
+                        d[KEY_USERNAME], d[KEY_PASSWORD])
+            else:
+                logEvent('tunnel already open!')
         elif d[KEY_COMMAND] == CMD_CLOSE_TUNNEL:
-            tunnel.closeTunnel()
+            logEvent('closeTunnel()')
+            tunnel.closeTunnel(AMAT_SERVER)
 
 #############
 # START HERE
@@ -242,7 +247,7 @@ try:
         time.sleep(sleepTime())
 
 except Exception, e:
-    logEvent(repr(e))
+    logEvent(traceback.format_exc())
 finally:
     logEvent('Stopping')
     closeLogfile()
