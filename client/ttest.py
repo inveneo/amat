@@ -6,6 +6,7 @@ from subprocess import Popen, PIPE, check_call
 SSH     = '/usr/bin/ssh'
 SSHPASS = '/usr/bin/sshpass'
 KILL    = '/bin/kill'
+ECHO    = '/bin/echo'
 
 # values received from server
 username    = '_000000004321'
@@ -41,12 +42,15 @@ if __name__ == '__main__':
     else:
         port_host_port = '%d:localhost:%d' % (server_port, client_port)
         user_host = '%s@%s' % (username, server)
-        command_list = [SSHPASS, '-p', password] + \
+
+        # take password from environment variable
+        command_list = [SSHPASS, '-e'] + \
         [SSH, '-C', '-g', '-N',
                 '-o', 'StrictHostKeyChecking=no',
                 '-o', 'ServerAliveInterval=10',
                 '-o', 'ServerAliveCountMax=3',
                 '-R', port_host_port, user_host]
+
         print 'Opening tunnel with', command_list
-        Popen(command_list)
+        Popen(command_list, env={'SSHPASS': password})
 

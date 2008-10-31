@@ -40,14 +40,13 @@ def openTunnel(server, server_port, username, password):
     port_host_port = '%d:localhost:%d' % (server_port, CLIENT_PORT)
     user_host = '%s@%s' % (username, server)
 
-    # XXX change this to use more secure form of sshpass (read from pipe)
-    command_list = [SSHPASS, '-p', password] + \
+    command_list = [SSHPASS, '-e'] + \
     [SSH, '-C', '-g', '-N',
             '-o', 'StrictHostKeyChecking=no',
             '-o', 'ServerAliveInterval=10',
             '-o', 'ServerAliveCountMax=3',
             '-R', port_host_port, user_host]
-    Popen(command_list)
+    Popen(command_list, env={'SSHPASS': password})
 
 def closeTunnel(server):
     """Close tunnel: kill all tunnel processes."""
