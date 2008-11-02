@@ -11,7 +11,7 @@
 #
 # (c) Inveneo 2008
 
-import os, time, signal, urllib, urllib2, traceback, logging
+import os, time, signal, urllib, urllib2, traceback, logging, logging.handlers
 import daemonize, tunnel
 
 ############
@@ -30,7 +30,10 @@ CANNED_CUST = u'fööd'
 CANNED_DESC = u'some text about fööd'
 CANNED_GEO  =  '30.000000,-90.000000'
 CANNED_OPPERIOD = ''
-LOGFILE = '/var/log/amatd.log'
+# XXX ditto
+LOG_FILE         = '/var/log/amatd.log'
+LOG_MAX_BYTES    = 1024 * 1024
+LOG_BACKUP_COUNT = 3
 
 # XXX make these realistic when done debugging
 MIN_WAIT_SECS = 10      # seconds to sleep, initially (10m)
@@ -187,12 +190,14 @@ def doCommand(response):
 # turn into spooky daemon owned by init
 retCode = daemonize.becomeDaemon(os.getcwd())
 
-# XXX should use syslogd
+# use a rotating file log
 logging.basicConfig(level=logging.DEBUG,
-        format='%(asctime)s %(levelname)s %(message)s',
-        filename=LOGFILE,
-        filemode='a')
+        format='%(asctime)s %(levelname)s %(message)s')
+rfh = logging.handlers.RotatingFileHandler(LOG_FILE, 'a', LOG_MAX_BYTES,
+        LOG_BACKUP_COUNT)
+logging.getLogger('').addHandler(rfh)
 logging.info('Starting (pid=%d)' % os.getpid())
+
 try:
     # set up signal handling: SIGHUP = re-read config file, SIGTERM = terminate.
     # they set global flags which get checked at various logical places
