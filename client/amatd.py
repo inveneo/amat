@@ -11,12 +11,14 @@
 #
 # (c) Inveneo 2008
 
-import os, time, signal, urllib, urllib2, traceback
+import os, time, signal, urllib, urllib2, traceback, logging
 import daemonize, tunnel
 
 ############
 # CONSTANTS
 ############
+
+CONF_FILE = '/etc/inveneo/conf.d/amatd.conf'
 
 # XXX all below must move to config file, or be returned by functions
 AMAT_SERVER = 'bb.inveneo.net'
@@ -28,42 +30,27 @@ CANNED_CUST = u'fööd'
 CANNED_DESC = u'some text about fööd'
 CANNED_GEO  =  '30.000000,-90.000000'
 CANNED_OPPERIOD = ''
-USER_PREFIX = '_'
-
 LOGFILE = '/var/log/amatd.log'
 
 # XXX make these realistic when done debugging
 MIN_WAIT_SECS = 10      # seconds to sleep, initially (10m)
 MAX_WAIT_SECS = 60      # seconds to sleep, at most (1hr)
 
+# XXX these should go in an API library common to both client and server
 # constants in checkin response
-KEY_COMMAND     = 'command'
-KEY_SERVER_PORT = 'server_port'
-KEY_USERNAME    = 'username'
-KEY_PASSWORD    = 'password'
-
+USER_PREFIX      = '_'
 CMD_OPEN_TUNNEL  = 'open_tunnel'
 CMD_CLOSE_TUNNEL = 'close_tunnel'
+KEY_COMMAND      = 'command'
+KEY_SERVER_PORT  = 'server_port'
+KEY_USERNAME     = 'username'
+KEY_PASSWORD     = 'password'
 
 InternalError = Exception("Internal Error")
 
 ############
 # FUNCTIONS
 ############
-
-def openLogfile():
-    global logfile
-    logfile = open(LOGFILE, 'a')
-
-def closeLogfile():
-    global logfile
-    logfile.close()
-
-def logEvent(s):
-    global logfile
-    stamp = time.asctime()
-    logfile.write('%s: %s\n' % (stamp, s))
-    logfile.flush()
 
 def responseToDict(s):
     """Turn a newline-separated string of key=value pairs into a dictionary."""
@@ -123,7 +110,7 @@ def register():
     plist.append(('opperiod', CANNED_OPPERIOD))
     params = urllib.urlencode(plist)
     url = 'http://%s:%d/reg?%s' % (AMAT_SERVER, AMAT_PORT, params)
-    logEvent('register(%s)' % url)
+    logging.info('register(%s)' % url)
     try:
         f = urllib2.urlopen(url)
     except IOError, e:
@@ -159,7 +146,7 @@ def checkin():
     plist.append(('status', 'ok'))
     params = urllib.urlencode(plist)
     url = 'http://%s:%d/checkin?%s' % (AMAT_SERVER, AMAT_PORT, params)
-    logEvent('checkin(%s)' % url)
+    logging.debug('checkin(%s)' % url)
     status = None
     response = None
     try:
@@ -180,17 +167,17 @@ def checkin():
 def doCommand(response):
     """Execute the given response command."""
     if response:
-        logEvent('response(%s)' % response)
+        logging.debug('response(%s)' % response)
         d = responseToDict(response)
         if d[KEY_COMMAND] == CMD_OPEN_TUNNEL:
             if not tunnel.firstTunnelPID(AMAT_SERVER):
-                logEvent('openTunnel()')
+                logging.info('openTunnel()')
                 tunnel.openTunnel(AMAT_SERVER, int(d[KEY_SERVER_PORT]),
                         d[KEY_USERNAME], d[KEY_PASSWORD])
             else:
-                logEvent('tunnel already open!')
+                logging.debug('tunnel already open!')
         elif d[KEY_COMMAND] == CMD_CLOSE_TUNNEL:
-            logEvent('closeTunnel()')
+            logging.info('closeTunnel()')
             tunnel.closeTunnel(AMAT_SERVER)
 
 #############
@@ -201,8 +188,11 @@ def doCommand(response):
 retCode = daemonize.becomeDaemon(os.getcwd())
 
 # XXX should use syslogd
-openLogfile()
-logEvent('Starting (pid=%d)' % os.getpid())
+logging.basicConfig(level=logging.DEBUG,
+        format='%(asctime)s %(levelname)s %(message)s',
+        filename=LOGFILE,
+        filemode='a')
+logging.info('Starting (pid=%d)' % os.getpid())
 try:
     # set up signal handling: SIGHUP = re-read config file, SIGTERM = terminate.
     # they set global flags which get checked at various logical places
@@ -247,8 +237,8 @@ try:
         time.sleep(sleepTime())
 
 except Exception, e:
-    logEvent(traceback.format_exc())
+    logging.error(traceback.format_exc())
 finally:
-    logEvent('Stopping')
-    closeLogfile()
+    logging.info('Stopping')
+    logging.shutdown()
 

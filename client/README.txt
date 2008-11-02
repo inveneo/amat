@@ -11,6 +11,20 @@ with the new parameters and go back to regular checkins.
 
 If sent SIGTERM, it will fold up its wings and die more or less gracefully.
 
+Things to do before starting it up the first time
+=================================================
+# From the directory containing this README file...
+$ sudo ln -s `pwd`/amatd-control /etc/init.d/amatd-control
+
+# In the following command, turn on paster-control in runlevels 2-5
+$ sudo sysv-rc-conf
+
+# Run the daemon by hand...
+$ sudo /etc/init.d/amatd-control start
+
+Components
+==========
+
 daemonize.py
 ------------
 A library that creates a bona fide Unix daemon out of your code.  The
@@ -19,6 +33,9 @@ wheel reinvented yet again.  But why not?  Reinvention is fun.
 tunnel.py
 ---------
 A library for managing reverse ssh tunnels.  The meat.
+
+Misc
+====
 
 The rest of these...
 
