@@ -11,14 +11,18 @@
 #
 # (c) Inveneo 2008
 
-import os, time, signal, urllib, urllib2, traceback, logging, logging.handlers
+import os, time, signal, urllib, urllib2, traceback
+import logging, logging.handlers, ConfigParser
 import daemonize, tunnel
 
 ############
 # CONSTANTS
 ############
 
-CONF_FILE = '/etc/inveneo/conf.d/amatd.conf'
+LOG_LEVEL = logging.DEBUG
+
+CONF_FILE    = '/etc/inveneo/conf.d/amatd.conf'
+CONF_SECTION = 'amatd'
 
 # XXX all below must move to config file, or be returned by functions
 AMAT_SERVER = 'bb.inveneo.net'
@@ -31,7 +35,6 @@ CANNED_DESC = u'some text about fööd'
 CANNED_GEO  =  '30.000000,-90.000000'
 CANNED_OPPERIOD = ''
 # XXX ditto
-LOG_FILE         = '/var/log/amatd.log'
 LOG_MAX_BYTES    = 1024 * 1024
 LOG_BACKUP_COUNT = 3
 
@@ -69,8 +72,16 @@ def responseToDict(s):
 def readConfig():
     """Read the config file."""
     global gotSIGHUP
+
+    defaults = {
+            'logfile': '/var/log/amatd.log',
+            'logmax':  str(1024 * 1024),
+            'logcount': str(3)
+            }
+    config = ConfigParser.SafeConfigParser(defaults)
+    config.readfp(open(CONF_FILE))
     gotSIGHUP = False
-    pass
+    return config
 
 def resetBackoff():
     """Reset the sleep time to its lowest value."""
@@ -187,14 +198,20 @@ def doCommand(response):
 # START HERE
 #############
 
+# read configuration file, else fail before turning to daemon
+config = readConfig()
+
 # turn into spooky daemon owned by init
 retCode = daemonize.becomeDaemon(os.getcwd())
 
-# use a rotating file log
-logging.basicConfig(level=logging.DEBUG,
+# use a rotating file log set
+logfile  = config.get(CONF_SECTION, 'logfile')
+logmax   = config.get(CONF_SECTION, 'logmax')
+logcount = config.get(CONF_SECTION, 'logcount')
+logging.basicConfig(level=LOG_LEVEL,
         format='%(asctime)s %(levelname)s %(message)s')
-rfh = logging.handlers.RotatingFileHandler(LOG_FILE, 'a', LOG_MAX_BYTES,
-        LOG_BACKUP_COUNT)
+rfh = logging.handlers.RotatingFileHandler(logfile, 'a', int(logmax),
+        int(logcount))
 logging.getLogger('').addHandler(rfh)
 logging.info('Starting (pid=%d)' % os.getpid())
 
@@ -208,14 +225,13 @@ try:
 
     # more initial configuration
     resetBackoff()
-    readConfig()
 
     # loop forever until signaled to terminate
     while not gotSIGTERM:
 
         # check for special signals
         if gotSIGHUP:
-            readConfig()
+            config = readConfig()
             doRegistration()        # won't return until registered or SIGTERM
         if gotSIGTERM:
             break
