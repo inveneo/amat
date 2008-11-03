@@ -19,11 +19,10 @@ import daemonize, tunnel
 # CONSTANTS
 ############
 
-LOG_LEVEL = logging.DEBUG
-
 CONF_FILE = '/etc/inveneo/conf.d/amatd.conf'
 
 # XXX make these realistic when done debugging
+LOG_LEVEL = logging.DEBUG
 MIN_WAIT_SECS = 10      # seconds to sleep, initially (10m)
 MAX_WAIT_SECS = 60      # seconds to sleep, at most (1hr)
 
