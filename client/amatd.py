@@ -21,22 +21,7 @@ import daemonize, tunnel
 
 LOG_LEVEL = logging.DEBUG
 
-CONF_FILE    = '/etc/inveneo/conf.d/amatd.conf'
-CONF_SECTION = 'amatd'
-
-# XXX all below must move to config file, or be returned by functions
-AMAT_SERVER = 'bb.inveneo.net'
-AMAT_PORT = 5000
-CANNED_MAC  =  '000000004321'
-CANNED_TYPE =  'hub'
-CANNED_HOST =  'jimhost'
-CANNED_CUST = u'fööd'
-CANNED_DESC = u'some text about fööd'
-CANNED_GEO  =  '30.000000,-90.000000'
-CANNED_OPPERIOD = ''
-# XXX ditto
-LOG_MAX_BYTES    = 1024 * 1024
-LOG_BACKUP_COUNT = 3
+CONF_FILE = '/etc/inveneo/conf.d/amatd.conf'
 
 # XXX make these realistic when done debugging
 MIN_WAIT_SECS = 10      # seconds to sleep, initially (10m)
@@ -73,14 +58,25 @@ def readConfig():
     """Read the config file."""
     global gotSIGHUP
 
-    defaults = {
-            'logfile': '/var/log/amatd.log',
-            'logmax':  str(1024 * 1024),
-            'logcount': str(3)
-            }
-    config = ConfigParser.SafeConfigParser(defaults)
-    config.readfp(open(CONF_FILE))
     gotSIGHUP = False
+    config = {}
+
+    parser = ConfigParser.SafeConfigParser()
+    parser.readfp(open(CONF_FILE))
+
+    config['customer']    = parser.get('client', 'customer')[:100]
+    config['description'] = parser.get('client', 'description')[:300]
+    config['latitude']    = parser.getfloat('client', 'latitude')
+    config['longitude']   = parser.getfloat('client', 'longitude')
+    config['opperiod']    = parser.get('client', 'opperiod')
+
+    config['server']   = parser.get('server', 'server')
+    config['reg_port'] = parser.getint('server', 'reg_port')
+
+    config['log_file']      = parser.get('daemon', 'log_file')
+    config['max_log_size']  = parser.getint('daemon', 'max_log_size')
+    config['max_log_count'] = parser.getint('daemon', 'max_log_count')
+
     return config
 
 def resetBackoff():
@@ -107,23 +103,29 @@ def handleSignal(number, frame):
 
 def getMAC():
     """Returns MAC address of eth0 as normal string."""
-    return CANNED_MAC
+    return '000000004321'
+
+def getType():
+    """Returns the type ('station' or 'hub') of this host."""
+    return 'hub'
 
 def getHostname():
     """Returns hostname as normal string."""
-    return CANNED_HOST[0:50]
+    return 'jimhost'[:50]
 
 def register():
     """Returns None if no connection made, else HTTP status as int."""
+    global config
     plist = [('mac', getMAC())]
-    plist.append(('type', CANNED_TYPE))
+    plist.append(('type', getType()))
     plist.append(('host', getHostname()))
-    plist.append(('cust', CANNED_CUST[0:100].encode('utf-8')))
-    plist.append(('desc', CANNED_DESC[0:300].encode('utf-8')))
-    plist.append(('geo',  CANNED_GEO[0:22]))
-    plist.append(('opperiod', CANNED_OPPERIOD))
+    plist.append(('cust', config['customer'].encode('utf-8')))
+    plist.append(('desc', config['description'].encode('utf-8')))
+    plist.append(('geo',  '%+.5f,%+.5f' %
+        (config['latitude'], config['longitude'])))
+    plist.append(('opperiod', config['opperiod']))
     params = urllib.urlencode(plist)
-    url = 'http://%s:%d/reg?%s' % (AMAT_SERVER, AMAT_PORT, params)
+    url = 'http://%s:%d/reg?%s' % (config['server'], config['reg_port'], params)
     logging.info('register(%s)' % url)
     try:
         f = urllib2.urlopen(url)
@@ -156,10 +158,13 @@ def checkin():
     """Returns (status, response) tuple, where:
     status is None if no connection made, else HTTP status as int, and
     response is list of command name followed by args, or empty list."""
+    global config
+
     plist = [('mac', getMAC())]
     plist.append(('status', 'ok'))
     params = urllib.urlencode(plist)
-    url = 'http://%s:%d/checkin?%s' % (AMAT_SERVER, AMAT_PORT, params)
+    url = 'http://%s:%d/checkin?%s' % (config['server'], config['reg_port'],
+            params)
     logging.debug('checkin(%s)' % url)
     status = None
     response = None
@@ -180,19 +185,22 @@ def checkin():
 
 def doCommand(response):
     """Execute the given response command."""
+    global config
+
     if response:
         logging.debug('response(%s)' % response)
         d = responseToDict(response)
+        server = config['server']
         if d[KEY_COMMAND] == CMD_OPEN_TUNNEL:
-            if not tunnel.firstTunnelPID(AMAT_SERVER):
+            if not tunnel.firstTunnelPID(server):
                 logging.info('openTunnel()')
-                tunnel.openTunnel(AMAT_SERVER, int(d[KEY_SERVER_PORT]),
+                tunnel.openTunnel(server, int(d[KEY_SERVER_PORT]),
                         d[KEY_USERNAME], d[KEY_PASSWORD])
             else:
                 logging.debug('tunnel already open!')
         elif d[KEY_COMMAND] == CMD_CLOSE_TUNNEL:
             logging.info('closeTunnel()')
-            tunnel.closeTunnel(AMAT_SERVER)
+            tunnel.closeTunnel(server)
 
 #############
 # START HERE
@@ -205,13 +213,10 @@ config = readConfig()
 retCode = daemonize.becomeDaemon(os.getcwd())
 
 # use a rotating file log set
-logfile  = config.get(CONF_SECTION, 'logfile')
-logmax   = config.get(CONF_SECTION, 'logmax')
-logcount = config.get(CONF_SECTION, 'logcount')
 logging.basicConfig(level=LOG_LEVEL,
         format='%(asctime)s %(levelname)s %(message)s')
-rfh = logging.handlers.RotatingFileHandler(logfile, 'a', int(logmax),
-        int(logcount))
+rfh = logging.handlers.RotatingFileHandler(config['log_file'], 'a',
+        config['max_log_size'], config['max_log_count'])
 logging.getLogger('').addHandler(rfh)
 logging.info('Starting (pid=%d)' % os.getpid())
 
