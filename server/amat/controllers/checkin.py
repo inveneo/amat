@@ -25,7 +25,7 @@ class CheckinController(BaseController):
         try:
             host = host_q.filter_by(mac=mac).one()
         except:
-            abort(400, 'Not one host with this mac')
+            abort(404, 'Not one host with this mac')
 
         # put checkin in the database
         status = d['status']
