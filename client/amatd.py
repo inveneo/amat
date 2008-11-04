@@ -13,13 +13,14 @@
 
 import os, time, signal, urllib, urllib2, traceback
 import logging, logging.handlers, ConfigParser
-import daemonize, tunnel
+import daemonize, tunnel, utils
 
 ############
 # CONSTANTS
 ############
 
 CONF_FILE = '/etc/inveneo/conf.d/amatd.conf'
+ENCODING = 'utf-8'
 
 # XXX make these realistic when done debugging
 LOG_LEVEL = logging.DEBUG
@@ -63,8 +64,10 @@ def readConfig():
     parser = ConfigParser.SafeConfigParser()
     parser.readfp(open(CONF_FILE))
 
-    config['customer']    = parser.get('client', 'customer')[:100]
-    config['description'] = parser.get('client', 'description')[:300]
+    config['customer']    = \
+            parser.get('client', 'customer').decode(ENCODING)[:100]
+    config['description'] = \
+            parser.get('client', 'description').decode(ENCODING)[:300]
     config['latitude']    = parser.getfloat('client', 'latitude')
     config['longitude']   = parser.getfloat('client', 'longitude')
     config['opperiod']    = parser.get('client', 'opperiod')
@@ -100,26 +103,18 @@ def handleSignal(number, frame):
     elif number == signal.SIGTERM:
         gotSIGTERM = True
 
-def getMAC():
-    """Returns MAC address of eth0 as normal string."""
-    return '000000004321'
-
 def getType():
     """Returns the type ('station' or 'hub') of this host."""
     return 'hub'
 
-def getHostname():
-    """Returns hostname as normal string."""
-    return 'jimhost'[:50]
-
 def register():
     """Returns None if no connection made, else HTTP status as int."""
     global config
-    plist = [('mac', getMAC())]
-    plist.append(('type', getType()))
-    plist.append(('host', getHostname()))
-    plist.append(('cust', config['customer'].encode('utf-8')))
-    plist.append(('desc', config['description'].encode('utf-8')))
+    plist = [('mac', utils.macAsStr('eth0'))]
+    plist.append(('type', utils.hostType()))
+    plist.append(('host', utils.hostName()[:50]))
+    plist.append(('cust', config['customer'].encode(ENCODING)))
+    plist.append(('desc', config['description'].encode(ENCODING)))
     plist.append(('geo',  '%+.5f,%+.5f' %
         (config['latitude'], config['longitude'])))
     plist.append(('opperiod', config['opperiod']))
@@ -159,7 +154,7 @@ def checkin():
     response is list of command name followed by args, or empty list."""
     global config
 
-    plist = [('mac', getMAC())]
+    plist = [('mac', utils.macAsStr('eth0'))]
     plist.append(('status', 'ok'))
     params = urllib.urlencode(plist)
     url = 'http://%s:%d/checkin?%s' % (config['server'], config['reg_port'],
@@ -175,6 +170,7 @@ def checkin():
         elif hasattr(e, 'code'):
             status = e.code
         else:
+            logging.critical(str(e))
             raise InternalError
     else:
         status = 200
@@ -256,6 +252,7 @@ try:
                 break
             continue
         else:
+            logging.critical('Got unexpected status %d' % status)
             raise InternalError
 
         # wait a spell before repeating
