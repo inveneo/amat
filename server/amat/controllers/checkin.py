@@ -28,29 +28,44 @@ class CheckinController(BaseController):
             abort(404, 'Not one host with this mac')
 
         # put checkin in the database
-        status = d['status']
+        status = None
         try:
-            c.checkin = Checkin(mac, status)
+            status = d['status']
+            assert status in ['ok', 'shutdown']
+        except:
+            abort(400, 'Invalid status')
+
+        temp = None
+        try:
+            temp = float(d.get('temp', u'0.0'))
+        except:
+            abort(400, 'Invalid temp')
+
+        try:
+            c.checkin = Checkin(mac, status, temp)
         except Exception, e:
-            abort(400, 'Missing or invalid data: (%012x,%s): "%s"' %
-                    (mac, status, str(e)))
+            abort(400, 'Missing or invalid data: (%012x,%s,%s): "%s"' %
+                    (mac, status, temp, str(e)))
 
         Session.save_or_update(c.checkin)
         Session.commit()
 
         # see if there is a command for this client
-        resp = ''
         tunnel_q = Session.query(Tunnel)
         tunnel = tunnel_q.filter_by(mac=mac).first()
         if tunnel:
-            command = 'open_tunnel'
-            server_port = int(tunnel.get_port())
-            username = tunnel.get_username()
-            password = tunnel.get_password()
-            resp = 'command=%s\n'     % command + \
-                   'server_port=%d\n' % server_port + \
-                   'client_port=22\n' + \
-                   'username=%s\n'    % username + \
-                   'password=%s\n'    % password
-        return resp
+            if tunnel.is_enabled():
+                command = 'open_tunnel'
+                server_port = int(tunnel.get_port())
+                username = tunnel.get_username()
+                password = tunnel.get_password()
+                return 'command=%s\n'     % command + \
+                       'server_port=%d\n' % server_port + \
+                       'client_port=22\n' + \
+                       'username=%s\n'    % username + \
+                       'password=%s\n'    % password
+            else:
+                command = 'close_tunnel'
+                return 'command=%s\n' % command
+        return ''
 

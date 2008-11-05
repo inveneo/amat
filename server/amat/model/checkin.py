@@ -36,7 +36,7 @@ class Checkin(object):
         self.status = status
 
     def set_temp(self, temp):
-        assert type(status) == float, 'status: not float'
+        assert type(temp) == float, 'temp: not float'
         self.temp = temp
 
     def __str__(self):
@@ -45,3 +45,4 @@ class Checkin(object):
                ('mac=%s\n'    % self.get_mac())    + \
                ('status=%s\n' % self.get_status()) + \
                ('temp=%s\n'   % self.get_temp())
+

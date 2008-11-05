@@ -25,6 +25,8 @@ class Tunnel(object):
     def get_port(self):     return '%d' % self.port
     def get_enabled(self):  return '%s' % self.enabled
 
+    def is_enabled(self): return self.enabled
+
     # mutators - each asserts the type it wants to see
     def set_mac(self, mac):
         assert type(mac) == int, 'mac: not int'
