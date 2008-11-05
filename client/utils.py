@@ -11,6 +11,10 @@ IFCONFIG = '/sbin/ifconfig'
 GREP     = '/bin/grep'
 HOSTNAME = '/bin/hostname'
 
+VERSION_FILE = '/etc/inveneo/os_version'
+STATION_DIR  = '/usr/X11R6/lib/X11' # a dir found only on stations
+HUB_DIR      = '/etc/squid'         # a dir found only on hubs
+
 def macAsStr(interface):
     """Return the MAC address of the given interface as string."""
     p1 = Popen([IFCONFIG, interface], stdout=PIPE)
@@ -40,8 +44,17 @@ def hostName():
 
 def hostType():
     """Makes a wild stab at which type of host this is."""
-    if os.path.isdir('/usr/X11R6/lib/X11'): return 'station'
-    elif os.path.isdir('/etc/squid'): return 'hub'
+    if os.path.isfile(VERSION_FILE):
+        try:
+            fp = open(VERSION_FILE)
+            os_type = fp.readline().strip().split()[0]
+            fp.close()
+        except:
+            return 'unknown'
+        if os_type == 'IDL': return 'station'
+        elif os_type == 'IHL': return 'hub'
+    elif os.path.isdir(STATION_DIR): return 'station'
+    elif os.path.isdir(HUB_DIR): return 'hub'
     return 'unknown'
 
 if __name__ == "__main__":
@@ -50,3 +63,4 @@ if __name__ == "__main__":
     print 'MAC address of %s is %012x' % (interface, macAsInt(interface))
     print 'Host name is %s' % hostName()
     print 'Host type is %s' % hostType()
+
