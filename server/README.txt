@@ -28,7 +28,7 @@ Either (preferred)...
 $ sudo /etc/init.d/paster-control start
 
 ...or...
-$ sudo paster serve --reload development.ini
+$ sudo paster serve --reload production.ini
 
 ...then watch the logfile at /var/log/paster.log
 $ sudo tail -f /var/log/paster.log

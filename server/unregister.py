@@ -41,13 +41,13 @@ if __name__ == "__main__":
 
     # remove tunnel and checkin and host entries
     print 'Deleting from database...'
-    c.execute('DELETE FROM tunnel WHERE mac=?', (smac,))
+    c.execute('DELETE FROM tunnel WHERE mac=?', (imac,))
     for row in c:
         print row
-    c.execute('DELETE FROM checkin WHERE mac=?', (smac,))
+    c.execute('DELETE FROM checkin WHERE mac=?', (imac,))
     for row in c:
         print row
-    c.execute('DELETE FROM host WHERE mac=?', (smac,))
+    c.execute('DELETE FROM host WHERE mac=?', (imac,))
     for row in c:
         print row
 

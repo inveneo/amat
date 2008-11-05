@@ -15,7 +15,7 @@
 ############### EDIT ME ##################
 DAEMON=/usr/bin/paster
 LOGFILE="/var/log/paster.log"
-DAEMON_OPTS=" serve --log-file $LOGFILE --reload development.ini"
+DAEMON_OPTS=" serve --log-file $LOGFILE --reload production.ini"
 RUN_AS=root
 APP_PATH=/home/jwiggins/amat/trunk/server
 PID_FILE=/var/run/paster.pid
