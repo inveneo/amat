@@ -24,15 +24,15 @@ class Host(object):
         self.opperiod = u'undefined'
 
     # accessors - all return strings
-    def get_mac(self):  return h.mac_int_to_str(self.mac)
-    def get_type(self): return self.type
-    def get_host(self): return self.host
-    def get_cust(self): return self.cust
-    def get_desc(self): return self.desc
-    def get_geo(self):  return '%f,%f' % (self.lat, self.lon)
+    def get_mac(self):      return h.mac_int_to_str(self.mac)
+    def get_type(self):     return self.type
+    def get_host(self):     return self.host
+    def get_cust(self):     return self.cust
+    def get_desc(self):     return self.desc
+    def get_geo(self):      return '%f,%f' % (self.lat, self.lon)
     def get_opperiod(self): return self.opperiod
 
-    # mutators - all take unicode strings, or int, or nothing
+    # mutators - all take unicode strings
     def set_type(self, tipe):
         assert type(tipe) == unicode, 'type: not unicode'
         tipe = tipe[0:g.SIZE_TYPE].lower()

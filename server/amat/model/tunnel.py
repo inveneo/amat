@@ -15,6 +15,7 @@ class Tunnel(object):
         self.username = u'undefined'
         self.password = u'undefined'
         self.port = h.get_free_port()
+        self.enabled = False
 
     # accessors - all return strings
     def get_id(self):       return '%d' % self.id
@@ -22,8 +23,9 @@ class Tunnel(object):
     def get_username(self): return self.username
     def get_password(self): return self.password
     def get_port(self):     return '%d' % self.port
+    def get_enabled(self):  return '%s' % self.enabled
 
-    # mutators - all take strings
+    # mutators - each asserts the type it wants to see
     def set_mac(self, mac):
         assert type(mac) == int, 'mac: not int'
         self.mac = mac
@@ -46,10 +48,15 @@ class Tunnel(object):
         assert type(port) == int, 'port: not int'
         self.port = port
 
+    def set_enabled(self, enabled):
+        assert type(enabled) == bool, 'enabled: not bool'
+        self.enabled = enabled
+
     def __str__(self):
-        return ('id=%s\n'     % self.get_id())     + \
-               ('mac=%s\n'    % self.get_mac())    + \
+        return ('id=%s\n'       % self.get_id())     + \
+               ('mac=%s\n'      % self.get_mac())    + \
                ('username=%s\n' % self.get_username()) + \
                ('password=%s\n' % self.get_password()) + \
-               ('port=%s\n'     % self.get_port())
+               ('port=%s\n'     % self.get_port()) + \
+               ('enabled=%s\n'  % self.get_enabled())
 

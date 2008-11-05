@@ -29,14 +29,16 @@ checkin_table = Table('checkin', metadata,
         Column('id',     types.Integer, primary_key=True),  # auto generated
         Column('mac',    types.Integer, ForeignKey('host.mac')),
         Column('status', types.Unicode(g.SIZE_STATUS)),
+        Column('temp',   types.Float),
         Column('tstamp', types.Float))
 
 tunnel_table = Table('tunnel', metadata,
-        Column('id',     types.Integer, primary_key=True),  # auto generated
-        Column('mac',    types.Integer, ForeignKey('host.mac')),
+        Column('id',       types.Integer, primary_key=True),  # auto generated
+        Column('mac',      types.Integer, ForeignKey('host.mac')),
         Column('username', types.Unicode(g.SIZE_USER)),
         Column('password', types.Unicode(g.SIZE_PASS)),
-        Column('port',     types.Integer))
+        Column('port',     types.Integer),
+        Column('enabled',  types.Boolean))
 
 mapper(Host, host_table)
 mapper(Checkin, checkin_table)
