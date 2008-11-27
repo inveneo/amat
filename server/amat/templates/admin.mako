@@ -7,6 +7,8 @@
 <body>
 <h3>admin</h3>
 
+<form action="admin" method="GET">
+
 <table cellpadding="5" border="1">
 
 <tr>
@@ -20,7 +22,7 @@
 </tr>
 
 % for row in c.rows:
-<td><input type="checkbox"></td>
+<td><input type="checkbox" ${row[2]} name="${row[0].get_mac()}"></td>
 <td>${row[1].get_port()}</td>
 <td>${row[0].get_mac()}</td>
 <td>${row[0].get_type()}</td>
@@ -31,5 +33,10 @@
 % endfor
 
 </table>
+
+<input type="hidden" name="update">
+<input type="submit" value="Update">
+</form>
+
 </body>
 </html>

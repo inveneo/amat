@@ -12,11 +12,25 @@ class AdminController(BaseController):
     """This controller is for tunnel administration."""
 
     def index(self):
-        """Perform join in a bonehead (but working) way."""
-        hosts = [host for host in Session.query(Host).all()]
+        """Tunnel administration."""
         c.rows = []
-        for host in hosts:
-            tunnel_q = Session.query(Tunnel)
+        host_q = Session.query(Host)
+        tunnel_q = Session.query(Tunnel)
+
+        # walk through all known hosts
+        for host in host_q.all():
+
+            # find the tunnel record for this host
             tunnel = tunnel_q.filter_by(mac=host.mac).one()
-            c.rows.append((host, tunnel))
+
+            # update tunnel enabled flag (unless just arriving)
+            if request.GET.has_key("update"):
+                tunnel.set_enabled(request.GET.has_key(host.get_mac()))
+            Session.save_or_update(tunnel)
+
+            # build output for template
+            enabled = ['','checked'][tunnel.enabled]
+            c.rows.append((host, tunnel, enabled))
+
+        Session.commit()
         return render('/admin.mako')
