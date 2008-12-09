@@ -25,6 +25,14 @@ $ sudo /etc/init.d/amatd-control start
 Components
 ==========
 
+amatd.conf
+----------
+The config file for this instance of the AMAT network.
+
+amatd.py
+--------
+The actual AMAT daemon.  See above.
+
 daemonize.py
 ------------
 A library that creates a bona fide Unix daemon out of your code.  The
@@ -34,17 +42,7 @@ tunnel.py
 ---------
 A library for managing reverse ssh tunnels.  The meat.
 
-Misc
-====
-
-The rest of these...
-
--rwxr-xr-x 1 inveneo inveneo  148 2008-07-14 18:13 getmac.sh
--rw-r--r-- 1 inveneo inveneo 3443 2008-10-14 18:14 old_amat_client.py
--rw-r--r-- 1 inveneo inveneo 1335 2008-10-14 18:14 old_amatd.py
--rw-r--r-- 1 inveneo inveneo 1671 2008-07-15 11:17 old_tunneler_client.py
--rw-r--r-- 1 inveneo inveneo  710 2008-07-14 18:13 old_tunneler.sh
-
-...were written by Dillo, and I'm not sure what all they do, but seems
-they are already superceded by the new amatd.  Thanks, Dillo!
+utils.py
+--------
+Some handy utilities.
 
