@@ -13,10 +13,10 @@
 ### END INIT INFO
 
 ############### EDIT ME ##################
-DAEMON=/home/inveneo/amat-client/amatd.py
+DAEMON=/opt/inveneo/amat-client/amatd.py
 DAEMON_OPTS=""
 RUN_AS=root
-APP_PATH=/home/inveneo/amat-client
+APP_PATH=/opt/inveneo/amat-client
 PID_FILE=/var/run/amatd.pid
 NAME="amatd"
 ############### END EDIT ME ##################
