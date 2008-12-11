@@ -41,4 +41,8 @@ def get_temperature():
     return None
 
 if __name__=='__main__':
-    print "Temperature is '%d'" % get_temperature()
+    temp = get_temperature()
+    if temp:
+        print "Temperature is '%d'" % temp
+    else:
+        print "Temperature is unavailable."
