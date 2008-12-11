@@ -19,6 +19,7 @@
 <th>host</th>
 <th>cust</th>
 <th>desc</th>
+<th>last heard from</th>
 </tr>
 
 % for row in c.rows:
@@ -29,6 +30,7 @@
 <td>${row[0].get_host()}</td>
 <td>${row[0].get_cust()}</td>
 <td>${row[0].get_desc()}</td>
+<td>${row[3]} (${row[4]})</td>
 </tr>
 % endfor
 

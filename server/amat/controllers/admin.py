@@ -4,7 +4,8 @@
 import logging
 
 from amat.lib.base import *
-from amat.model import Session, Host, Checkin, Tunnel
+from amat.model import Session, Host, Tunnel, Checkin
+from amat.lib.common import *
 
 log = logging.getLogger(__name__)
 
@@ -16,6 +17,7 @@ class AdminController(BaseController):
         c.rows = []
         host_q = Session.query(Host)
         tunnel_q = Session.query(Tunnel)
+        checkin_q = Session.query(Checkin)
 
         # walk through all known hosts
         for host in host_q.all():
@@ -26,11 +28,17 @@ class AdminController(BaseController):
             # update tunnel enabled flag (unless just arriving)
             if request.GET.has_key("update"):
                 tunnel.set_enabled(request.GET.has_key(host.get_mac()))
-            Session.save_or_update(tunnel)
+                Session.save_or_update(tunnel)
+
+            # find most recent checkin, if any
+            checkins = checkin_q.filter_by(mac=host.mac)
+            latest = checkins.order_by(Checkin.tstamp.desc()).first()
+            tstamp = latest.tstamp
+            blurb = secs_to_blurb(tstamp)
 
             # build output for template
             enabled = ['','checked'][tunnel.enabled]
-            c.rows.append((host, tunnel, enabled))
+            c.rows.append((host, tunnel, enabled, tstamp, blurb))
 
         Session.commit()
         return render('/admin.mako')
