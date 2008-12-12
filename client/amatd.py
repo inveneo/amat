@@ -14,6 +14,7 @@
 import os, time, signal, urllib, urllib2, traceback
 import logging, logging.handlers, ConfigParser
 import daemonize, tunnel, utils
+from common import *
 
 ############
 # CONSTANTS
@@ -26,16 +27,6 @@ ENCODING = 'utf-8'
 LOG_LEVEL = logging.DEBUG
 MIN_WAIT_SECS = 10      # seconds to sleep, initially (10m)
 MAX_WAIT_SECS = 60      # seconds to sleep, at most (1hr)
-
-# XXX these should go in an API library common to both client and server
-# constants in checkin response
-USER_PREFIX      = '_'
-CMD_OPEN_TUNNEL  = 'open_tunnel'
-CMD_CLOSE_TUNNEL = 'close_tunnel'
-KEY_COMMAND      = 'command'
-KEY_SERVER_PORT  = 'server_port'
-KEY_USERNAME     = 'username'
-KEY_PASSWORD     = 'password'
 
 InternalError = Exception("Internal Error")
 
@@ -110,15 +101,19 @@ def getType():
 def register():
     """Returns None if no connection made, else HTTP status as int."""
     global config
-    plist = [('mac', utils.macAsStr('eth0'))]
-    plist.append(('type', utils.hostType()))
-    plist.append(('host', utils.hostName()[:50]))
-    plist.append(('cust', config['customer'].encode(ENCODING)))
-    plist.append(('desc', config['description'].encode(ENCODING)))
-    plist.append(('geo',  '%+.5f,%+.5f' %
-        (config['latitude'], config['longitude'])))
-    plist.append(('opperiod', config['opperiod']))
+
+    # create parameter list for registration request
+    plist = [(REGISTER_ARG_MAC, utils.macAsStr('eth0'))]
+    plist.append((REGISTER_ARG_TYPE, utils.hostType()))
+    plist.append((REGISTER_ARG_HOST, utils.hostName()[:50]))
+    plist.append((REGISTER_ARG_CUST, config['customer'].encode(ENCODING)))
+    plist.append((REGISTER_ARG_DESC, config['description'].encode(ENCODING)))
+    plist.append((REGISTER_ARG_GEO,
+        '%+.5f,%+.5f' % (config['latitude'], config['longitude'])))
+    plist.append((REGISTER_ARG_OPPERIOD, config['opperiod']))
     params = urllib.urlencode(plist)
+
+    # attempt registration
     url = 'http://%s:%d/reg?%s' % (config['server'], config['reg_port'], params)
     logging.info('register(%s)' % url)
     try:
@@ -154,9 +149,14 @@ def checkin():
     response is list of command name followed by args, or empty list."""
     global config
 
-    plist = [('mac', utils.macAsStr('eth0'))]
-    plist.append(('status', 'ok'))
+    # create parameter list for checkin request
+    plist = [(CHECKIN_ARG_MAC, utils.macAsStr('eth0'))]
+    plist.append((CHECKIN_ARG_STATUS, 'ok'))
+    temp = get_temperature()
+    if temp:
+        plist.append((CHECKIN_ARG_TEMP, "%.1f" % temp))
     params = urllib.urlencode(plist)
+
     url = 'http://%s:%d/checkin?%s' % (config['server'], config['reg_port'],
             params)
     logging.debug('checkin(%s)' % url)
@@ -186,14 +186,16 @@ def doCommand(response):
         logging.debug('response(%s)' % response)
         d = responseToDict(response)
         server = config['server']
-        if d[KEY_COMMAND] == CMD_OPEN_TUNNEL:
+        if d[CHECKIN_KEY_COMMAND] == CHECKIN_CMD_OPEN_TUNNEL:
             if not tunnel.firstTunnelPID(server):
                 logging.info('openTunnel()')
-                tunnel.openTunnel(server, int(d[KEY_SERVER_PORT]),
-                        d[KEY_USERNAME], d[KEY_PASSWORD])
+                tunnel.openTunnel(server,
+                        int(d[CHECKIN_KEY_SERVER_PORT]),
+                        d[CHECKIN_KEY_USERNAME],
+                        d[CHECKIN_KEY_PASSWORD])
             else:
                 logging.debug('tunnel already open!')
-        elif d[KEY_COMMAND] == CMD_CLOSE_TUNNEL:
+        elif d[CHECKIN_KEY_COMMAND] == CHECKIN_CMD_CLOSE_TUNNEL:
             logging.info('closeTunnel()')
             tunnel.closeTunnel(server)
 

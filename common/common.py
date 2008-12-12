@@ -6,7 +6,32 @@
 
 import os.path, time
 
-TEMP_PATH = '/proc/acpi/thermal_zone/THRM/temperature'
+USER_PREFIX      = '_'
+
+# constants in registration request
+REGISTER_ARG_MAC  = 'mac'
+REGISTER_ARG_TYPE = 'type'
+REGISTER_ARG_HOST = 'host'
+REGISTER_ARG_CUST = 'cust'
+REGISTER_ARG_DESC = 'desc'
+REGISTER_ARG_GEO  = 'geo'
+REGISTER_ARG_OPPERIOD = 'opperiod'
+
+# constants in checkin request
+CHECKIN_ARG_MAC    = 'mac'
+CHECKIN_ARG_STATUS = 'status'
+CHECKIN_ARG_TEMP   = 'temp'
+
+# constants in checkin response
+CHECKIN_CMD_OPEN_TUNNEL  = 'open_tunnel'
+CHECKIN_CMD_CLOSE_TUNNEL = 'close_tunnel'
+CHECKIN_KEY_COMMAND      = 'command'
+CHECKIN_KEY_SERVER_PORT  = 'server_port'
+CHECKIN_KEY_USERNAME     = 'username'
+CHECKIN_KEY_PASSWORD     = 'password'
+
+# other constants
+ACPI_TEMP_PATH = '/proc/acpi/thermal_zone/THRM/temperature'
 
 def secs_to_blurb(s):
     """Convert number of seconds since Unix Epoch into an English blurb.
@@ -29,13 +54,13 @@ def secs_to_blurb(s):
         return "%d days ago" % int(diff/86400)
 
 def get_temperature():
-    """Return system temperature as integer, else None."""
+    """Return system temperature as float, else None."""
     try:
-        if os.path.isfile(TEMP_PATH):
-            (key, val) = open(TEMP_PATH).readline().split(':')
+        if os.path.isfile(ACPI_TEMP_PATH):
+            (key, val) = open(ACPI_TEMP_PATH).readline().split(':')
             if key.strip() == 'temperature':
                 (temp, scale) = val.strip().split()
-                return int(temp)
+                return float(temp)
     except:
         pass
     return None
@@ -43,6 +68,7 @@ def get_temperature():
 if __name__=='__main__':
     temp = get_temperature()
     if temp:
-        print "Temperature is '%d'" % temp
+        print "Temperature is '%.1f'" % temp
     else:
         print "Temperature is unavailable."
+
