@@ -33,12 +33,13 @@ class AdminController(BaseController):
             # find most recent checkin, if any
             checkins = checkin_q.filter_by(mac=host.mac)
             latest = checkins.order_by(Checkin.tstamp.desc()).first()
+            temp = latest.temp
             tstamp = latest.tstamp
             blurb = secs_to_blurb(tstamp)
 
             # build output for template
             enabled = ['','checked'][tunnel.enabled]
-            c.rows.append((host, tunnel, enabled, tstamp, blurb))
+            c.rows.append((host, tunnel, enabled, tstamp, blurb, temp))
 
         Session.commit()
         return render('/admin.mako')
