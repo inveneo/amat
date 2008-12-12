@@ -39,7 +39,9 @@ class AdminController(BaseController):
 
             # build output for template
             enabled = ['','checked'][tunnel.enabled]
-            c.rows.append((host, tunnel, enabled, tstamp, blurb, temp))
+            c.rows.append((host.get_mac(), enabled, tunnel.get_port(),
+                host.get_type(), host.get_host(), host.get_cust(),
+                host.get_desc(), tstamp, blurb, temp))
 
         Session.commit()
         return render('/admin.mako')

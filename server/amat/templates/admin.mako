@@ -23,16 +23,16 @@
 <th>temperature</th>
 </tr>
 
-% for row in c.rows:
-<td><input type="checkbox" ${row[2]} name="${row[0].get_mac()}"></td>
-<td>${row[1].get_port()}</td>
-<td>${row[0].get_mac()}</td>
-<td>${row[0].get_type()}</td>
-<td>${row[0].get_host()}</td>
-<td>${row[0].get_cust()}</td>
-<td>${row[0].get_desc()}</td>
-<td>${row[3]} (${row[4]})</td>
-<td>${row[5]}</td>
+% for (mac, enabled, port, type, host, cust, desc, tstamp, blurb, temp) in c.rows:
+<td><input type="checkbox" ${enabled} name="${mac}"></td>
+<td>${port}</td>
+<td>${mac}</td>
+<td>${type}</td>
+<td>${host}</td>
+<td>${cust}</td>
+<td>${desc}</td>
+<td>${tstamp} (${blurb})</td>
+<td>${temp}</td>
 </tr>
 % endfor
 
