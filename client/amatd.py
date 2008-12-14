@@ -21,6 +21,7 @@ from common import *
 ############
 
 CONF_FILE = '/etc/inveneo/conf.d/amatd.conf'
+PID_FILE = '/var/run/amatd.pid'
 ENCODING = 'utf-8'
 
 # XXX make these realistic when done debugging
@@ -207,7 +208,7 @@ def doCommand(response):
 config = readConfig()
 
 # turn into spooky daemon owned by init
-retCode = daemonize.becomeDaemon(os.getcwd())
+retCode = daemonize.becomeDaemon(os.getcwd(), PID_FILE)
 
 # use a rotating file log set
 logging.basicConfig(level=LOG_LEVEL,
