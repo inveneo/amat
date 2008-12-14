@@ -25,6 +25,7 @@ PID_FILE = '/var/run/amatd.pid'
 ENCODING = 'utf-8'
 
 # XXX make these realistic when done debugging
+#LOG_LEVEL = logging.INFO
 LOG_LEVEL = logging.DEBUG
 MIN_WAIT_SECS = 10      # seconds to sleep, initially (10m)
 MAX_WAIT_SECS = 60      # seconds to sleep, at most (1hr)
@@ -35,7 +36,7 @@ InternalError = Exception("Internal Error")
 # FUNCTIONS
 ############
 
-def responseToDict(s):
+def keyvalsToDict(s):
     """Turn a newline-separated string of key=value pairs into a dictionary."""
     d = {}
     items = s.split('\n')
@@ -175,20 +176,24 @@ def checkin():
             raise InternalError
     else:
         status = 200
-        # XXX should wrap in try block in case result is cut short
         response = f.read()
     return (status, response)
 
 def doCommand(response):
-    """Execute the given response command."""
+    """Execute the given response command.  Return success status."""
     global config
 
     if response:
-        logging.debug('response(%s)' % response)
-        d = responseToDict(response)
+        logging.debug('response(%s)' % response.replace('\n', ','))
+        d = keyvalsToDict(response)
         server = config['server']
         if d[CHECKIN_KEY_COMMAND] == CHECKIN_CMD_OPEN_TUNNEL:
             if not tunnel.firstTunnelPID(server):
+                if (CHECKIN_KEY_SERVER_PORT not in d) or \
+                        (CHECKIN_KEY_USERNAME not in d) or \
+                        (CHECKIN_KEY_PASSWORD not in d):
+                            logging.info('Invalid server response')
+                            return False
                 logging.info('openTunnel()')
                 tunnel.openTunnel(server,
                         int(d[CHECKIN_KEY_SERVER_PORT]),
@@ -196,9 +201,13 @@ def doCommand(response):
                         d[CHECKIN_KEY_PASSWORD])
             else:
                 logging.debug('tunnel already open!')
+            return True
         elif d[CHECKIN_KEY_COMMAND] == CHECKIN_CMD_CLOSE_TUNNEL:
-            logging.info('closeTunnel()')
-            tunnel.closeTunnel(server)
+            if tunnel.firstTunnelPID(server):
+                logging.info('closeTunnel()')
+                tunnel.closeTunnel(server)
+            return True
+    return False
 
 #############
 # START HERE
@@ -211,11 +220,13 @@ config = readConfig()
 retCode = daemonize.becomeDaemon(os.getcwd(), PID_FILE)
 
 # use a rotating file log set
-logging.basicConfig(level=LOG_LEVEL,
-        format='%(asctime)s %(levelname)s %(message)s')
+logging.basicConfig(level=LOG_LEVEL)
 rfh = logging.handlers.RotatingFileHandler(config['log_file'], 'a',
         config['max_log_size'], config['max_log_count'])
-logging.getLogger('').addHandler(rfh)
+rfh.setLevel(LOG_LEVEL)
+rfh.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s',
+    '%Y-%m-%d %H:%M:%S'))
+logging.getLogger().addHandler(rfh)
 logging.info('Starting (pid=%d)' % os.getpid())
 
 try:
@@ -243,8 +254,8 @@ try:
         (status, response) = checkin()
         if status == 200:
             # OK
-            doCommand(response)
-            resetBackoff()
+            if doCommand(response):
+                resetBackoff()
         elif status in [None, 500]:
             # no connection or server error: try again later
             pass
