@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-import os
-import sys
+import os, sys
 
 MAXFD     = 1024
 DEV_NULL  = "/dev/null"
 DEV_PTS_0 = "/dev/pts/0"
 
-def becomeDaemon(workdir="/"):
+def becomeDaemon(workdir="/", pidfile="/dev/null"):
     """Detach a process from the controlling terminal and run it in the
     background as a daemon.
     """
@@ -19,7 +18,7 @@ def becomeDaemon(workdir="/"):
         raise Exception, "%s [%d]" % (e.strerror, e.errno)
 
     if (pid == 0):
-        # this is the child
+        # this is the child (first)
 
         os.setsid()
 
@@ -37,11 +36,14 @@ def becomeDaemon(workdir="/"):
             os.chdir(workdir)
             os.umask(0)
         else:
-            # child exits
+            # this is the first child
+            f = open(pidfile, "w")
+            f.write(str(pid))
+            f.close()
             os._exit(0)
 
     else:
-        # parent exits
+        # this is the parent: simply exit
         os._exit(0)
 
     # determine max number of file descriptors
@@ -65,7 +67,9 @@ def becomeDaemon(workdir="/"):
 
 if __name__ == "__main__":
 
-    retCode = becomeDaemon(os.getcwd())
+    workdir = os.getcwd()
+    pidfile = os.path.join(workdir, sys.argv[0] + '.pid')
+    retCode = becomeDaemon(workdir, pidfile)
 
     procParams = """
     return code = %s
