@@ -4,6 +4,7 @@
 import logging
 
 from amat.lib.base import *
+from amat.lib.common import *
 from amat.model import Session, Host, Tunnel
 
 log = logging.getLogger(__name__)
@@ -16,7 +17,7 @@ class RegController(BaseController):
         # pull MAC address, the primary key, from query string
         d = request.GET
         try:
-            mac = h.mac_str_to_int(d['mac'])
+            mac = h.mac_str_to_int(d[REGISTER_ARG_MAC])
         except:
             abort(400, 'Missing or invalid mac')
 
@@ -34,27 +35,27 @@ class RegController(BaseController):
 
         # update host attributes
         try:
-            c.host.set_type(d['type'])
+            c.host.set_type(d[REGISTER_ARG_TYPE])
         except:
             abort(400, 'Missing or invalid type')
         try:
-            c.host.set_host(d.get('host', u''))
+            c.host.set_host(d.get(REGISTER_ARG_HOST, u''))
         except:
             abort(400, 'Invalid host')
         try:
-            c.host.set_cust(d.get('cust', u''))
+            c.host.set_cust(d.get(REGISTER_ARG_CUST, u''))
         except:
             abort(400, 'Invalid cust')
         try:
-            c.host.set_desc(d.get('desc', u''))
+            c.host.set_desc(d.get(REGISTER_ARG_DESC, u''))
         except:
             abort(400, 'Invalid desc')
         try:
-            c.host.set_geo(d.get('geo', u''))
+            c.host.set_geo(d.get(REGISTER_ARG_GEO, u''))
         except:
             abort(400, 'Invalid geo')
         try:
-            c.host.set_opperiod(d.get('opperiod', u''))
+            c.host.set_opperiod(d.get(REGISTER_ARG_OPPERIOD, u''))
         except:
             abort(400, 'Invalid opperiod')
 

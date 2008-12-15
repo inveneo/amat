@@ -4,6 +4,7 @@
 import logging
 
 from amat.lib.base import *
+from amat.lib.common import *
 from amat.model import Session, Host, Checkin, Tunnel
 
 log = logging.getLogger(__name__)

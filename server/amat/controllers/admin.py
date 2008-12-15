@@ -4,8 +4,8 @@
 import logging
 
 from amat.lib.base import *
-from amat.model import Session, Host, Tunnel, Checkin
 from amat.lib.common import *
+from amat.model import Session, Host, Tunnel, Checkin
 
 log = logging.getLogger(__name__)
 
@@ -45,3 +45,4 @@ class AdminController(BaseController):
 
         Session.commit()
         return render('/admin.mako')
+
