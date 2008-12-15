@@ -48,40 +48,38 @@ def keyvalsToDict(s):
     return d
 
 def readConfig():
-    """Read the config file."""
-    global gotSIGHUP
-
-    gotSIGHUP = False
-    config = {}
+    """Read the config file and return it as dictionary."""
+    global config
 
     parser = ConfigParser.SafeConfigParser()
     parser.readfp(open(CONF_FILE))
 
-    config['customer']    = \
-            parser.get('client', 'customer').decode(ENCODING)[:100]
-    config['description'] = \
-            parser.get('client', 'description').decode(ENCODING)[:300]
-    config['latitude']    = parser.getfloat('client', 'latitude')
-    config['longitude']   = parser.getfloat('client', 'longitude')
-    config['opperiod']    = parser.get('client', 'opperiod')
+    config = {}
+    config['customer']      = \
+            parser.get('client', 'customer').decode(ENCODING)
+    config['description']   = \
+            parser.get('client', 'description').decode(ENCODING)
+    config['latitude']      = parser.getfloat('client', 'latitude')
+    config['longitude']     = parser.getfloat('client', 'longitude')
+    config['opperiod']      = parser.get('client', 'opperiod')
 
-    config['server']   = parser.get('server', 'server')
-    config['reg_port'] = parser.getint('server', 'reg_port')
+    config['server']        = parser.get('server', 'server')
+    config['reg_port']      = parser.getint('server', 'reg_port')
 
     config['log_file']      = parser.get('daemon', 'log_file')
     config['max_log_size']  = parser.getint('daemon', 'max_log_size')
     config['max_log_count'] = parser.getint('daemon', 'max_log_count')
 
-    return config
-
 def resetBackoff():
     """Reset the sleep time to its lowest value."""
     global sleepSecs
+
     sleepSecs = MIN_WAIT_SECS
 
 def sleepTime(backoff=True):
     """Returns number of seconds to sleep; does exponential backoff."""
     global sleepSecs
+
     seconds = sleepSecs
     if backoff:
         sleepSecs = min(sleepSecs * 2, MAX_WAIT_SECS)
@@ -91,6 +89,7 @@ def handleSignal(number, frame):
     """Sets global flag when signal is received."""
     global gotSIGHUP
     global gotSIGTERM
+
     if number == signal.SIGHUP:
         gotSIGHUP = True
     elif number == signal.SIGTERM:
@@ -107,7 +106,7 @@ def register():
     # create parameter list for registration request
     plist = [(REGISTER_ARG_MAC, utils.macAsStr('eth0'))]
     plist.append((REGISTER_ARG_TYPE, utils.hostType()))
-    plist.append((REGISTER_ARG_HOST, utils.hostName()[:50]))
+    plist.append((REGISTER_ARG_HOST, utils.hostName()))
     plist.append((REGISTER_ARG_CUST, config['customer'].encode(ENCODING)))
     plist.append((REGISTER_ARG_DESC, config['description'].encode(ENCODING)))
     plist.append((REGISTER_ARG_GEO,
@@ -131,9 +130,14 @@ def register():
 
 def doRegistration():
     """Keep trying forever until registered or SIGTERM."""
+    global gotSIGHUP
     global gotSIGTERM
+
     registered = False
     while not registered and not gotSIGTERM:
+        if gotSIGHUP:
+            readConfig()
+            gotSIGHUP = False
         status = register()
         if status == 200:
             # OK
@@ -214,7 +218,7 @@ def doCommand(response):
 #############
 
 # read configuration file, else fail before turning to daemon
-config = readConfig()
+readConfig()
 
 # turn into spooky daemon owned by init
 retCode = daemonize.becomeDaemon(os.getcwd(), PID_FILE)
@@ -240,13 +244,17 @@ try:
     # more initial configuration
     resetBackoff()
 
+    # always start with a registration (in case params have changed)
+    doRegistration()    # won't return until registered or SIGTERM
+
     # loop forever until signaled to terminate
     while not gotSIGTERM:
 
         # check for special signals
         if gotSIGHUP:
-            config = readConfig()
-            doRegistration()        # won't return until registered or SIGTERM
+            readConfig()
+            gotSIGHUP = False
+            doRegistration()    # won't return until registered or SIGTERM
         if gotSIGTERM:
             break
 
