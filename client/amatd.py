@@ -183,34 +183,64 @@ def checkin():
         response = f.read()
     return (status, response)
 
+def tunnelIsOpen(server):
+    """Return answer to this question (True or False)."""
+    return tunnel.firstTunnelPID(server) != None
+
+def checkAndOpenTunnel(server, d):
+    """Check parameters and if good then open tunnel."""
+    global serverPort
+
+    if (CHECKIN_KEY_SERVER_PORT not in d) or \
+            (CHECKIN_KEY_USERNAME not in d) or \
+            (CHECKIN_KEY_PASSWORD not in d):
+        logging.info('Missing parameter(s)')
+        return False
+    serverPort = int(d[CHECKIN_KEY_SERVER_PORT])
+    logging.info('openTunnel()')
+    tunnel.openTunnel(server, serverPort, d[CHECKIN_KEY_USERNAME],
+            d[CHECKIN_KEY_PASSWORD])
+    return True
+
+def closeAnyTunnels(server):
+    """Close all tunnels and set a global value."""
+    global serverPort
+
+    logging.info('closeTunnel()')
+    tunnel.closeTunnel(server)
+    serverPort = 0
+    return True
+
 def doCommand(response):
     """Execute the given response command.  Return success status."""
     global config
+    global serverPort
 
     if response:
         logging.debug('response(%s)' % response.replace('\n', ','))
         d = keyvalsToDict(response)
         server = config['server']
+
+        # choose command to run
         if d[CHECKIN_KEY_COMMAND] == CHECKIN_CMD_OPEN_TUNNEL:
-            if not tunnel.firstTunnelPID(server):
-                if (CHECKIN_KEY_SERVER_PORT not in d) or \
-                        (CHECKIN_KEY_USERNAME not in d) or \
-                        (CHECKIN_KEY_PASSWORD not in d):
-                            logging.info('Invalid server response')
-                            return False
-                logging.info('openTunnel()')
-                tunnel.openTunnel(server,
-                        int(d[CHECKIN_KEY_SERVER_PORT]),
-                        d[CHECKIN_KEY_USERNAME],
-                        d[CHECKIN_KEY_PASSWORD])
+            if tunnelIsOpen(server):
+                if (CHECKIN_KEY_SERVER_PORT not in d):
+                    logging.info('Missing parameter(s)')
+                    return False
+                if int(d[CHECKIN_KEY_SERVER_PORT]) != serverPort:
+                    closeAnyTunnels(server)
+                    return checkAndOpenTunnel(server, d)
+                else:
+                    logging.debug('Tunnel already open at port %d' % serverPort)
+                    return True
             else:
-                logging.debug('tunnel already open!')
-            return True
+                return checkAndOpenTunnel(server, d)
+
         elif d[CHECKIN_KEY_COMMAND] == CHECKIN_CMD_CLOSE_TUNNEL:
-            if tunnel.firstTunnelPID(server):
-                logging.info('closeTunnel()')
-                tunnel.closeTunnel(server)
+            closeAnyTunnels(server)
             return True
+
+    # something was bogus
     return False
 
 #############
@@ -243,6 +273,7 @@ try:
 
     # more initial configuration
     resetBackoff()
+    closeAnyTunnels(config['server'])
 
     # always start with a registration (in case params have changed)
     doRegistration()    # won't return until registered or SIGTERM

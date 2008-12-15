@@ -46,6 +46,8 @@ def openTunnel(server, server_port, username, password):
             '-o', 'ServerAliveInterval=10',
             '-o', 'ServerAliveCountMax=3',
             '-R', port_host_port, user_host]
+
+    # launch subprocess and do not wait for it
     Popen(command_list, env={'SSHPASS': password})
 
 def closeTunnel(server):
