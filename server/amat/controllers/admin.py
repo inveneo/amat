@@ -29,7 +29,12 @@ class AdminController(BaseController):
 
             # update tunnel enabled flag (unless just arriving)
             if request.GET.has_key("update"):
-                tunnel.set_enabled(request.GET.has_key(host.get_mac()))
+                if request.GET.has_key(host.get_mac()):
+                    tunnel.set_port(h.get_free_port())
+                    tunnel.set_enabled(True)
+                else:
+                    tunnel.set_port(0)
+                    tunnel.set_enabled(False)
                 Session.save_or_update(tunnel)
 
             # find most recent checkin, if any

@@ -88,7 +88,7 @@ class RegController(BaseController):
             except:
                 abort(400, 'Invalid password')
             try:
-                c.tunnel.set_port(h.get_free_port())
+                c.tunnel.set_port(0)
             except:
                 abort(400, 'Invalid port')
 
