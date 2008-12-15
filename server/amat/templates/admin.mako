@@ -7,7 +7,7 @@
 <body>
 <h3>admin</h3>
 
-<form action="admin" method="GET">
+<form action="admin" method="POST">
 
 <table cellpadding="5" border="1">
 

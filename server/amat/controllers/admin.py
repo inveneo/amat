@@ -28,8 +28,8 @@ class AdminController(BaseController):
             tunnel = tunnel_q.filter_by(mac=host.mac).one()
 
             # update tunnel enabled flag (unless just arriving)
-            if request.GET.has_key("update"):
-                if request.GET.has_key(host.get_mac()):
+            if request.POST.has_key("update"):
+                if request.POST.has_key(host.get_mac()):
                     tunnel.set_port(h.get_free_port())
                     tunnel.set_enabled(True)
                 else:
