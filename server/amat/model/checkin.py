@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # checkin.py - the AMAT data model for a CHECKIN
 # (c) Inveneo 2008
 

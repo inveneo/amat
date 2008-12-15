@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # tunnel.py - the AMAT data model for a TUNNEL
 # (c) Inveneo 2008
 

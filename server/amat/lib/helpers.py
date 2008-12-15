@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # helpers.py
 # (c) Inveneo 2008
 

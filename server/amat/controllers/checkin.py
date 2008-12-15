@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # checkin.py - controller for clients checking in with server
 # (c) Inveneo 2008
 

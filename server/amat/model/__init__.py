@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # __init__.py - the AMAT data model
 # (c) Inveneo 2008
 

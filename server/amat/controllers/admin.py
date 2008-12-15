@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # admin.py - controller for tunnel administration
 # (c) Inveneo 2008
 

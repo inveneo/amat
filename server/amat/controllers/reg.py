@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # reg.py - controller that registers new clients
 # (c) Inveneo 2008
 

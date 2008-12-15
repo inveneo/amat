@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # host.py - the AMAT data model for a HOST
 # (c) Inveneo 2008
 

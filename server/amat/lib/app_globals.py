@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # app_globals.py - globls for the running application
 # (c) Inveneo 2008
 
