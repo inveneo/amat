@@ -6,8 +6,6 @@
 
 import os.path, time
 
-USER_PREFIX      = '_'
-
 # constants in registration request
 REGISTER_ARG_MAC  = 'mac'
 REGISTER_ARG_TYPE = 'type'
