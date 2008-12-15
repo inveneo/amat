@@ -25,6 +25,7 @@ CHECKIN_CMD_OPEN_TUNNEL  = 'open_tunnel'
 CHECKIN_CMD_CLOSE_TUNNEL = 'close_tunnel'
 CHECKIN_KEY_COMMAND      = 'command'
 CHECKIN_KEY_SERVER_PORT  = 'server_port'
+CHECKIN_KEY_CLIENT_PORT  = 'client_port'
 CHECKIN_KEY_USERNAME     = 'username'
 CHECKIN_KEY_PASSWORD     = 'password'
 
