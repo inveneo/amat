@@ -1,18 +1,21 @@
 # This is an example amatd config file
 
+# everything is optional. Comments show the defaults
+
 [client]
-customer    = fööd
-description = some text about fööd
-latitude    = 30.000000
-longitude   = -90.000000
-opperiod    =
+# customer    = Inveneo AMAT Client
+# description = Unconfigured Client
+# latitude    = 37.7793 
+# longitude   = -122.4192 
+# host_type   = hub
+# opperiod    =
 
 [server]
-server   = bb.inveneo.net
-reg_port = 5000
+# server   = bb.inveneo.net
+# reg_port = 5000
 
 [daemon]
-log_file      = /var/log/amatd.log
-max_log_size  = 5000000
-max_log_count = 4
+# log_file      = /var/log/amatd.log
+# max_log_size  = 5000000
+# max_log_count = 4
 

@@ -21,12 +21,10 @@ from common import *
 ############
 
 CONF_FILE = '/etc/inveneo/conf.d/amatd.conf'
-PID_FILE = '/var/run/amatd.pid'
 ENCODING = 'utf-8'
 
 # XXX make these realistic when done debugging
-#LOG_LEVEL = logging.INFO
-LOG_LEVEL = logging.DEBUG
+LOG_LEVEL = logging.INFO
 MIN_WAIT_SECS = 10      # seconds to sleep, initially (10m)
 MAX_WAIT_SECS = 60      # seconds to sleep, at most (1hr)
 
@@ -55,20 +53,66 @@ def readConfig():
     parser.readfp(open(CONF_FILE))
 
     config = {}
-    config['customer']      = \
+    try:
+        config['customer']      = \
             parser.get('client', 'customer').decode(ENCODING)
-    config['description']   = \
+    except ConfigParser.NoOptionError:
+        config['customer']      = 'Inveneo AMAT Client'
+
+    try:
+        config['description']   = \
             parser.get('client', 'description').decode(ENCODING)
-    config['latitude']      = parser.getfloat('client', 'latitude')
-    config['longitude']     = parser.getfloat('client', 'longitude')
-    config['opperiod']      = parser.get('client', 'opperiod')
+    except ConfigParser.NoOptionError:
+        config['description']   = 'Unconfigured Client'
 
-    config['server']        = parser.get('server', 'server')
-    config['reg_port']      = parser.getint('server', 'reg_port')
+    try:
+        config['latitude']      = parser.getfloat('client', 'latitude')
+    except ConfigParser.NoOptionError:
+        config['latitude'] = 37.7793 # san francisco
 
-    config['log_file']      = parser.get('daemon', 'log_file')
-    config['max_log_size']  = parser.getint('daemon', 'max_log_size')
-    config['max_log_count'] = parser.getint('daemon', 'max_log_count')
+    try:
+        config['longitude']     = parser.getfloat('client', 'longitude')
+    except ConfigParser.NoOptionError:
+        config['longitude'] = -122.4192 # san francisco
+
+    try:
+        config['opperiod']      = parser.get('client', 'opperiod')
+    except ConfigParser.NoOptionError:
+        config['opperiod'] = ""
+    
+    try:
+        config['host_type'] = parser.get('client', 'host_type')
+    except ConfigParser.NoOptionError:
+        # guess type if it's an Inveneo OS
+        config['host_type'] = utils.hostType()
+        # set to 'hub' if unknown
+        if config['host_type'] = 'unknown': config['host_type'] = 'hub'
+
+
+    try:
+        config['server']        = parser.get('server', 'server')
+    except ConfigParser.NoOptionError:
+        config['server'] = 'bb.inveneo.net'
+
+    try:
+        config['reg_port']      = parser.getint('server', 'reg_port')
+    except ConfigParser.NoOptionError:
+        config['reg_port'] = 5000
+
+    try:
+        config['log_file']      = parser.get('daemon', 'log_file')
+    except ConfigParser.NoOptionError:
+        config['log_file'] = '/var/log/amatd.log'
+
+    try:
+        config['max_log_size']  = parser.getint('daemon', 'max_log_size')
+    except ConfigParser.NoOptionError:
+        config['max_log_size'] = 5000000
+
+    try:
+        config['max_log_count'] = parser.getint('daemon', 'max_log_count')
+    except ConfigParser.NoOptionError:
+        config['max_log_count'] = 4
 
 def resetBackoff():
     """Reset the sleep time to its lowest value."""
@@ -105,7 +149,7 @@ def register():
 
     # create parameter list for registration request
     plist = [(REGISTER_ARG_MAC, utils.macAsStr('eth0'))]
-    plist.append((REGISTER_ARG_TYPE, utils.hostType()))
+    plist.append((REGISTER_ARG_TYPE, config['host_type']))
     plist.append((REGISTER_ARG_HOST, utils.hostName()))
     plist.append((REGISTER_ARG_CUST, config['customer'].encode(ENCODING)))
     plist.append((REGISTER_ARG_DESC, config['description'].encode(ENCODING)))
@@ -147,6 +191,7 @@ def doRegistration():
             # no connection or server error: try again later
             time.sleep(sleepTime())
         else:
+            logging.debug("status error: %s" % status)
             raise InternalError
 
 def checkin():
@@ -249,9 +294,6 @@ def doCommand(response):
 
 # read configuration file, else fail before turning to daemon
 readConfig()
-
-# turn into spooky daemon owned by init
-retCode = daemonize.becomeDaemon(os.getcwd(), PID_FILE)
 
 # use a rotating file log set
 logging.basicConfig(level=LOG_LEVEL)

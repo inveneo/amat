@@ -12,41 +12,51 @@
 # Description:       starts instance of amatd daemon using start-stop-daemon
 ### END INIT INFO
 
+# set -e
+
+WHERE_AM_I=`readlink -f $0`
+WHERE_AM_I=`dirname $WHERE_AM_I`
+
 ############### EDIT ME ##################
-DAEMON=/opt/inveneo/amat-client/amatd.py
+NAME="amatd"
+DAEMON=$WHERE_AM_I/$NAME.py
 DAEMON_OPTS=""
 RUN_AS=root
-APP_PATH=/opt/inveneo/amat-client
-PID_FILE=/var/run/amatd.pid
-NAME="amatd"
-############### END EDIT ME ##################
+APP_PATH=$WHERE_AM_I
+PID_FILE=/var/run/$NAME.pid
 
+############### END EDIT ME ##################
 test -x $DAEMON || exit 0
 
-set -e
+do_start() {
+    echo -n "Starting $NAME: "
+    start-stop-daemon -d $APP_PATH -c $RUN_AS --start --background --pidfile $PID_FILE  --make-pidfile --exec $DAEMON -- $DAEMON_OPTS
+    echo "done."
+}
+
+do_stop() {
+    echo -n "Stopping $NAME: "
+    start-stop-daemon --stop --pidfile $PID_FILE
+    echo "done."
+}
 
 case "$1" in
   start)
-        echo -n "Starting $NAME: "
-        start-stop-daemon -d $APP_PATH -c $RUN_AS --start --background --pidfile $PID_FILE  --make-pidfile --exec $DAEMON -- $DAEMON_OPTS
-        echo "done."
+	do_start
         ;;
 
   stop)
-        echo -n "Stopping $NAME: "
-        start-stop-daemon --stop --pidfile $PID_FILE
-        echo "done."
-        ;;
+	do_stop
+	;;
 
   restart|force-reload)
-        echo -n "Restarting $NAME: "
-        start-stop-daemon --stop --pidfile $PID_FILE
-        sleep 1
-        start-stop-daemon -d $APP_PATH -c $RUN_AS --start --background --pidfile $PID_FILE  --make-pidfile --exec $DAEMON -- $DAEMON_OPTS
-        echo "done."
-        ;;
+	do_stop
+        sleep 2
+	do_start
+	;;
+
   *)
-        N=/etc/init.d/$NAME
+        N=/etc/init.d/$NAME-control
         echo "Usage: $N {start|stop|restart|force-reload}" >&2
         exit 1
         ;;
