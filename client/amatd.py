@@ -25,9 +25,6 @@ ENCODING = 'utf-8'
 
 # XXX make these realistic when done debugging
 LOG_LEVEL = logging.INFO
-MIN_WAIT_SECS = 10      # seconds to sleep, initially (10m)
-MAX_WAIT_SECS = 60      # seconds to sleep, at most (1hr)
-
 InternalError = Exception("Internal Error")
 
 ############
@@ -53,6 +50,17 @@ def readConfig():
     parser.readfp(open(CONF_FILE))
 
     config = {}
+
+    try:
+        config['min_checkin_seconds']      = parser.getint('client', 'min_checkin_minutes')*60
+    except ConfigParser.NoOptionError:
+        config['min_checkin_seconds'] = 30*60 # 30 minutes
+
+    try:
+        config['max_checkin_seconds']      = parser.get('client', 'max_checkin_minutes')*60
+    except ConfigParser.NoOptionError:
+        config['max_checkin_seconds'] = 120*60 # 2 hrs
+
     try:
         config['customer']      = \
             parser.get('client', 'customer').decode(ENCODING)
@@ -86,7 +94,7 @@ def readConfig():
         # guess type if it's an Inveneo OS
         config['host_type'] = utils.hostType()
         # set to 'hub' if unknown
-        if config['host_type'] = 'unknown': config['host_type'] = 'hub'
+        if config['host_type'] == 'unknown': config['host_type'] = 'hub'
 
 
     try:
@@ -118,7 +126,7 @@ def resetBackoff():
     """Reset the sleep time to its lowest value."""
     global sleepSecs
 
-    sleepSecs = MIN_WAIT_SECS
+    sleepSecs = config['min_checkin_seconds']
 
 def sleepTime(backoff=True):
     """Returns number of seconds to sleep; does exponential backoff."""
@@ -126,7 +134,7 @@ def sleepTime(backoff=True):
 
     seconds = sleepSecs
     if backoff:
-        sleepSecs = min(sleepSecs * 2, MAX_WAIT_SECS)
+        sleepSecs = min(sleepSecs * 2, config['max_checkin_seconds'])
     return seconds
 
 def handleSignal(number, frame):
