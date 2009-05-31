@@ -37,7 +37,7 @@ def keyvalsToDict(s):
     items = s.split('\n')
     for item in items:
         item = item.strip()
-        pair = item.split('=')
+        pair = item.split('=',1)
         if len(pair) == 2:
             d[pair[0]] = pair[1]
     return d
