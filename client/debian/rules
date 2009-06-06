@@ -16,10 +16,8 @@ install: build
 	dh_clean -k 
 	dh_installdirs
 	# Add here commands to install the package into debian/amatd.
-	dh_install amatd.conf.sample /etc/amatd
+	dh_install amatd.conf /etc/amatd
 	dh_install *.py /usr/local/bin/amatd
-	#dh_install amatd-control /etc/init.d
-	#sysv-rc-conf --level 2345 amatd-control on
 
 # Build architecture-independent files here.
 binary-indep: build install

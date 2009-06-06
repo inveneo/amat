@@ -10,19 +10,13 @@
 # Description:       starts instance of amatd daemon using start-stop-daemon
 ### END INIT INFO
 
-# set -e
-
-WHERE_AM_I=`readlink -f $0`
-WHERE_AM_I=`dirname $WHERE_AM_I`
-
 ############### EDIT ME ##################
 NAME="amatd"
-DAEMON=$WHERE_AM_I/$NAME.py
+APP_PATH="/usr/local/bin/amatd"
+DAEMON="$APP_PATH/$NAME.py"
 DAEMON_OPTS=""
+PID_FILE="/var/run/$NAME.pid"
 RUN_AS=root
-APP_PATH=$WHERE_AM_I
-PID_FILE=/var/run/$NAME.pid
-
 ############### END EDIT ME ##################
 test -x $DAEMON || exit 0
 
@@ -54,7 +48,7 @@ case "$1" in
 	;;
 
   *)
-        N=/etc/init.d/$NAME-control
+        N=/etc/init.d/$NAME
         echo "Usage: $N {start|stop|restart|force-reload}" >&2
         exit 1
         ;;
