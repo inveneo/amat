@@ -20,7 +20,7 @@ from common import *
 # CONSTANTS
 ############
 
-CONF_FILE = '/etc/inveneo/conf.d/amatd.conf'
+CONF_FILE = '/etc/amatd/amatd.conf'
 ENCODING = 'utf-8'
 
 # XXX make these realistic when done debugging
