@@ -1,7 +1,5 @@
 #!/bin/sh
 
-# This control script should be linked from /etc/init.d
-
 ### BEGIN INIT INFO
 # Provides:          amatd daemon instance
 # Required-Start:    $all

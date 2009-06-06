@@ -1,0 +1,14 @@
+Source: amatd
+Section: admin
+Priority: optional
+Maintainer: Inveneo Inc <support@inveneo.org>
+Build-Depends: debhelper (>= 5)
+Standards-Version: 3.7.2
+
+Package: amatd
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, python2.5, sshpass, sysv-rc-conf
+Suggests: ssh
+Description: Automated Monitoring And Tunneling Daemon
+ Registers with remote server, creates ssh tunnel on demand using credentials
+ returned, which allows remote server to reverse-tunnel back into this machine.
