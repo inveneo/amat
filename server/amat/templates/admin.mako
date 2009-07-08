@@ -6,10 +6,11 @@ from authkit.permissions import UserIn
 
 <head>
 <title>admin</title>
+<meta http-equiv="refresh" content="300" />
 </head>
 
 <body>
-<h3><span>admin</span>
+<h3><span>admin</span><span style="padding: 8px">|</span><span><a href='/admin'>refresh</a></span>
 % if authorized(UserIn(["admin"])):
 <span style="padding: 8px">|</span><span><a href='/auth/signout'>signout</a></span>
 % endif
@@ -44,7 +45,7 @@ from authkit.permissions import UserIn
 </table>
 
 <input type="hidden" name="update">
-<input type="submit" value="Update">
+<input type="submit" value="Save Settings">
 </form>
 
 </body>
