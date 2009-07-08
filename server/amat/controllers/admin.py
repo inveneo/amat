@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 
 # admin.py - controller for tunnel administration
 # (c) Inveneo 2008
@@ -8,12 +8,15 @@ import logging
 from amat.lib.base import *
 from amat.lib.common import *
 from amat.model import Session, Host, Tunnel, Checkin
+from authkit.authorize.pylons_adaptors import authorize
+from authkit.permissions import RemoteUser, ValidAuthKitUser, UserIn
 
 log = logging.getLogger(__name__)
 
 class AdminController(BaseController):
     """This controller is for tunnel administration."""
-
+    
+    @authorize(UserIn(["admin"]))
     def index(self):
         """Tunnel administration."""
         c.rows = []

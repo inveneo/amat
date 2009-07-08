@@ -1,4 +1,5 @@
 """Pylons middleware initialization"""
+import authkit.authenticate
 from paste.cascade import Cascade
 from paste.registry import RegistryManager
 from paste.urlparser import StaticURLParser
@@ -37,7 +38,8 @@ def make_app(global_conf, full_stack=True, **app_conf):
     app = PylonsApp()
 
     # CUSTOM MIDDLEWARE HERE (filtered by error handling middlewares)
-
+    app = authkit.authenticate.middleware(app, app_conf)
+    
     if asbool(full_stack):
         # Handle Python exceptions
         app = ErrorHandler(app, global_conf, error_template=error_template,

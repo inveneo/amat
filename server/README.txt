@@ -5,7 +5,7 @@ This is a Pylons server that acts as the common endpoint for AMAT tunnels.
 How this Pylons application was created
 =======================================
 $ sudo apt-get update
-$ sudo apt-get install python-pylons python-sqlalchemy python-pexpect sqlite3 sysv-rc-conf rssh
+$ sudo apt-get install python-pylons python-sqlalchemy python-authkit python-pexpect sqlite3 sysv-rc-conf rssh
 $ sudo paster create -t pylons amat
 
 Things to do before starting it up the first time

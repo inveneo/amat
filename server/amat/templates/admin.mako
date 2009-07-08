@@ -1,3 +1,7 @@
+<%!
+from authkit.authorize.pylons_adaptors import authorized
+from authkit.permissions import UserIn
+%>
 <html>
 
 <head>
@@ -5,12 +9,13 @@
 </head>
 
 <body>
-<h3>admin</h3>
-
+<h3><span>admin</span>
+% if authorized(UserIn(["admin"])):
+<span style="padding: 8px">|</span><span><a href='/auth/signout'>signout</a></span>
+% endif
+</h3>
 <form action="admin" method="POST">
-
 <table cellpadding="5" border="1">
-
 <tr>
 <th>enable</th>
 <th>port</th>
